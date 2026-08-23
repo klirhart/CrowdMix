@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-surface: #0f0f12;
+  --color-surface-raised: #18181f;
+  --color-surface-overlay: #22222c;
+  --color-border: #2e2e3a;
+  --color-muted: #9494a8;
+  --color-accent: #a855f7;
+  --color-accent-hover: #9333ea;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-surface text-white font-sans;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
