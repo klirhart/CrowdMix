@@ -11,9 +11,9 @@ function getEnvVar(name: EnvVar): string | undefined {
 
 /** Returns configured env values. Required vars are validated in later phases. */
 export const env = {
-  supabaseUrl: getEnvVar('VITE_SUPABASE_URL') ?? '',
-  supabaseAnonKey: getEnvVar('VITE_SUPABASE_ANON_KEY') ?? '',
-  youtubeApiKey: import.meta.env.VITE_YOUTUBE_API_KEY ?? '',
+  supabaseUrl: (getEnvVar('VITE_SUPABASE_URL') ?? '').trim(),
+  supabaseAnonKey: (getEnvVar('VITE_SUPABASE_ANON_KEY') ?? '').trim(),
+  youtubeApiKey: (import.meta.env.VITE_YOUTUBE_API_KEY ?? '').trim(),
   appUrl: import.meta.env.VITE_APP_URL ?? 'http://localhost:5173',
   isDev: import.meta.env.DEV,
 } as const

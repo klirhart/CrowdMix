@@ -7,6 +7,20 @@ interface ImportMetaEnv {
   readonly VITE_APP_URL: string
 }
 
+interface YouTubePlayerOptions {
+  events?: {
+    onStateChange?: (event: { data: number }) => void
+  }
+}
+
+interface Window {
+  YT?: {
+    Player?: new (elementId: string, options: YouTubePlayerOptions) => { destroy: () => void }
+    PlayerState?: { ENDED: number }
+  }
+  onYouTubeIframeAPIReady?: () => void
+}
+
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
