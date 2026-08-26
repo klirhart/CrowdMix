@@ -48,6 +48,10 @@ export function validateUsername(username: string): string | null {
   return null
 }
 
+export const BIO_MAX_LENGTH = 280
+export const LOCATION_MAX_LENGTH = 80
+export const WEBSITE_MAX_LENGTH = 200
+
 export function validateDisplayName(displayName: string): string | null {
   const trimmed = displayName.trim()
 
@@ -57,6 +61,62 @@ export function validateDisplayName(displayName: string): string | null {
 
   if (trimmed.length > 50) {
     return 'Display name must be 50 characters or fewer.'
+  }
+
+  return null
+}
+
+export function validateBio(bio: string): string | null {
+  if (bio.trim().length > BIO_MAX_LENGTH) {
+    return `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+  }
+
+  return null
+}
+
+export function validateLocation(location: string): string | null {
+  if (location.trim().length > LOCATION_MAX_LENGTH) {
+    return `Location must be ${LOCATION_MAX_LENGTH} characters or fewer.`
+  }
+
+  return null
+}
+
+export function normalizeWebsite(website: string): string {
+  const trimmed = website.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed
+  }
+
+  return `https://${trimmed}`
+}
+
+export function validateWebsite(website: string): string | null {
+  const trimmed = website.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const normalized = normalizeWebsite(trimmed)
+
+  if (normalized.length > WEBSITE_MAX_LENGTH) {
+    return `Website must be ${WEBSITE_MAX_LENGTH} characters or fewer.`
+  }
+
+  try {
+    const parsed = new URL(normalized)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return 'Enter a valid website URL.'
+    }
+    if (!parsed.hostname.includes('.')) {
+      return 'Enter a valid website URL.'
+    }
+  } catch {
+    return 'Enter a valid website URL.'
   }
 
   return null
@@ -92,6 +152,10 @@ export function getAuthErrorMessage(error: unknown): string {
 
   if (message.includes('Unable to validate email address')) {
     return 'Enter a valid email address.'
+  }
+
+  if (/email rate limit exceeded/i.test(message)) {
+    return 'Too many signup emails were sent. Please wait a few minutes and try again.'
   }
 
   if (message.includes('Supabase is not configured')) {

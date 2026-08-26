@@ -1,14 +1,75 @@
 import { useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { useNavigate } from 'react-router-dom'
+import {
+  ArrowRight,
+  Camera,
+  ChevronRight,
+  KeyRound,
+  Music,
+  QrCode,
+  ScanLine,
+  Search,
+  Users,
+} from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
+import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Tabs, type TabItem } from '@/components/ui/Tabs'
+import { tabId, tabPanelId } from '@/components/ui/tab-ids'
+import { cx } from '@/components/ui/cx'
+import { PageHeader, PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { getRoomByCode, addRoomMember, searchPublicRooms } from '@/lib/rooms'
 import { searchProfiles } from '@/lib/profiles'
 import type { Room } from '@/types/room'
 import type { Profile } from '@/types/profile'
+
+function roomCodeFromScan(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (/^[A-Z0-9]{5}$/i.test(trimmed)) {
+    return trimmed.toUpperCase()
+  }
+
+  try {
+    const url = new URL(trimmed)
+    const fromQuery = url.searchParams.get('room')?.trim()
+    if (fromQuery && /^[A-Z0-9]{5}$/i.test(fromQuery)) {
+      return fromQuery.toUpperCase()
+    }
+
+    const fromPath = url.pathname.match(/\/r\/([A-Z0-9]{5})/i)
+    if (fromPath?.[1]) {
+      return fromPath[1].toUpperCase()
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
+function isAlreadyMemberError(error: unknown): boolean {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    if ((error as { code?: string }).code === '23505') {
+      return true
+    }
+  }
+
+  const message = error instanceof Error ? error.message : String(error)
+  return /unique constraint|duplicate key/i.test(message)
+}
+
+type JoinTab = 'code' | 'search' | 'qr'
+
+const tabItems: ReadonlyArray<TabItem<JoinTab>> = [
+  { value: 'code', label: 'Room Code', icon: <KeyRound size={15} strokeWidth={2.25} /> },
+  { value: 'search', label: 'Search', icon: <Search size={15} strokeWidth={2.25} /> },
+  { value: 'qr', label: 'QR Code', icon: <QrCode size={15} strokeWidth={2.25} /> },
+]
 
 export function JoinRoomPage() {
   const navigate = useNavigate()
@@ -24,6 +85,8 @@ export function JoinRoomPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [cameraActive, setCameraActive] = useState(false)
+
+  usePageTitle('Join a room')
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -85,20 +148,11 @@ export function JoinRoomPage() {
           context.drawImage(video, 0, 0, canvas.width, canvas.height)
           const result = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height)
           if (result?.data) {
-            try {
-              const url = new URL(result.data)
-              const code = url.searchParams.get('room')
-              if (code) {
-                setRoomCode(code.toUpperCase())
-                setActiveTab('code')
-                return
-              }
-            } catch {
-              if (/^[A-Z0-9]{5}$/i.test(result.data)) {
-                setRoomCode(result.data.toUpperCase())
-                setActiveTab('code')
-                return
-              }
+            const code = roomCodeFromScan(result.data)
+            if (code) {
+              setCameraActive(false)
+              navigate(`/r/${code}`)
+              return
             }
           }
         }
@@ -131,7 +185,7 @@ export function JoinRoomPage() {
       window.cancelAnimationFrame(animationFrame)
       stream?.getTracks().forEach((track) => track.stop())
     }
-  }, [activeTab, cameraActive])
+  }, [activeTab, cameraActive, navigate])
 
   const handleJoinByCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -165,232 +219,303 @@ export function JoinRoomPage() {
         return
       }
 
-      // Check room accessibility
-      if (room.visibility === 'private') {
-        setError('This room is private. You need an invitation to join.')
-        return
-      }
-
       if (!room.is_active) {
         setError('This room is no longer active.')
         return
       }
 
-      // Join the room
-      await addRoomMember(room.id, user.id)
+      if (room.visibility === 'private') {
+        navigate(`/r/${room.room_code}`)
+        return
+      }
 
-      // Navigate to the room
+      await addRoomMember(room.id, user.id)
       navigate(`/r/${room.room_code}`)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to join room'
-      // Ignore unique constraint error (user already member)
-      if (errorMessage.includes('unique constraint')) {
+      if (isAlreadyMemberError(err)) {
         navigate(`/r/${code}`)
       } else {
-        setError(errorMessage)
+        setError(err instanceof Error ? err.message : 'Failed to join room')
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const tabButtonClass = (isActive: boolean) =>
-    `flex-1 px-4 py-3 font-semibold rounded-lg border transition-colors ${
-      isActive
-        ? 'bg-accent text-white border-accent'
-        : 'border-border bg-surface-raised text-muted hover:bg-surface-overlay'
-    }`
+  const hasSearched = Boolean(searchQuery.trim())
+  const noResults =
+    !searching && hasSearched && roomResults.length === 0 && profileResults.length === 0
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <div>
-        <h1 className="text-3xl font-bold">Join a Room</h1>
-        <p className="mt-2 text-muted">
-          Find and join a room to start voting on music
-        </p>
-      </div>
+    <PageShell width="narrow">
+      <PageHeader
+        eyebrow="Join in"
+        title="Join a Room"
+        description="Enter a code, search the community, or scan a QR code to start voting on music."
+      />
 
-      {error && <Alert variant="error">{error}</Alert>}
+      {error && (
+        <Alert variant="error" className="mt-6">
+          {error}
+        </Alert>
+      )}
 
-      {/* Tabs */}
-      <div className="mt-8 flex gap-2">
-        <button
-          onClick={() => {
-            setActiveTab('code')
-            setError(null)
-          }}
-          className={tabButtonClass(activeTab === 'code')}
-        >
-          Room Code
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('search')
-            setError(null)
-          }}
-          className={tabButtonClass(activeTab === 'search')}
-        >
-          Search
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('qr')
-            setError(null)
-          }}
-          className={tabButtonClass(activeTab === 'qr')}
-        >
-          QR Code
-        </button>
-      </div>
+      <Tabs
+        items={tabItems}
+        value={activeTab}
+        onChange={(next) => {
+          setActiveTab(next)
+          setError(null)
+        }}
+        idBase="join"
+        label="How to join a room"
+        className="mt-8"
+      />
 
       {/* Tab: Room Code */}
       {activeTab === 'code' && (
-        <form onSubmit={handleJoinByCode} className="mt-8 space-y-6">
-          <div>
+        <form
+          onSubmit={handleJoinByCode}
+          role="tabpanel"
+          id={tabPanelId('join', 'code')}
+          aria-labelledby={tabId('join', 'code')}
+          className="mt-8 animate-enter space-y-6"
+        >
+          <div className="rounded-panel border border-border bg-surface-raised p-6 text-center sm:p-8">
+            <span
+              className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-soft text-accent"
+              aria-hidden="true"
+            >
+              <KeyRound size={22} strokeWidth={2.25} />
+            </span>
+
+            <p className="mb-3 text-meta uppercase text-subtle">Room code</p>
+
             <Input
               id="roomCode"
-              label="Enter Room Code"
+              label="Enter room code"
               type="text"
-              placeholder="e.g., A7K29"
+              placeholder="A7K29"
               value={roomCode}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               disabled={loading}
               maxLength={5}
-              className="flex-1 font-mono text-center text-lg tracking-widest"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              hideLabel
+              className={cx(
+                'text-center font-mono text-2xl font-bold uppercase',
+                'tracking-[0.35em] placeholder:tracking-[0.35em] sm:text-3xl',
+              )}
             />
-            <p className="mt-2 text-sm text-muted">
-              You can find the room code from the room creator or in the shared link
+
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              Room codes are 5 characters. Ask the room creator, or use a shared link.
             </p>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent hover:bg-accent-hover"
-          >
+          <Button type="submit" disabled={loading} size="lg" fullWidth>
             {loading ? 'Joining...' : 'Join Room'}
+            {loading ? null : <ArrowRight size={16} strokeWidth={2.5} aria-hidden="true" />}
           </Button>
         </form>
       )}
 
       {/* Tab: Search */}
       {activeTab === 'search' && (
-        <div className="mt-8 space-y-6">
-          <div>
-            <Input
-              id="search"
-              label="Search for Rooms or Users"
-              type="text"
-              placeholder="Search room name, username..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-            <p className="mt-2 text-sm text-muted">
-              Search public rooms or user profiles.
-            </p>
-          </div>
+        <div
+          role="tabpanel"
+          id={tabPanelId('join', 'search')}
+          aria-labelledby={tabId('join', 'search')}
+          className="mt-8 animate-enter space-y-5"
+        >
+          <Input
+            id="search"
+            label="Search for rooms or users"
+            type="text"
+            placeholder="Search room name, username..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            icon={<Search size={16} strokeWidth={2.25} />}
+            hint="Search public rooms or user profiles."
+          />
 
-          <div className="rounded-lg border border-border bg-surface-raised p-6 text-center">
-            {searching && <p className="text-muted">Searching...</p>}
-            {!searching && searchQuery.trim() && roomResults.length === 0 && profileResults.length === 0 && (
-              <p className="text-muted">No rooms or users found.</p>
-            )}
-            {roomResults.length > 0 && (
-              <div className="space-y-2 text-left">
-                <h3 className="font-semibold text-white">Rooms</h3>
+          {searching ? <LoadingSpinner label="Searching..." inline className="px-1" /> : null}
+
+          {noResults ? (
+            <div className="rounded-card border border-dashed border-border bg-surface-raised/60 p-8 text-center">
+              <p className="text-sm text-muted">No rooms or users match “{searchQuery}”.</p>
+            </div>
+          ) : null}
+
+          {roomResults.length > 0 && (
+            <section>
+              <h2 className="mb-2.5 flex items-center gap-2 text-meta uppercase text-subtle">
+                <Music size={13} strokeWidth={2.5} aria-hidden="true" />
+                Rooms
+              </h2>
+              <div className="space-y-2">
                 {roomResults.map((room) => (
                   <button
                     key={room.id}
                     type="button"
-                    onClick={() => {
-                      setRoomCode(room.room_code)
-                      setActiveTab('code')
-                    }}
-                    className="flex w-full items-center justify-between rounded-lg border border-border p-3 hover:bg-surface-overlay"
+                    onClick={() => navigate(`/r/${room.room_code}`)}
+                    className={cx(
+                      'flex w-full items-center gap-3 rounded-card border border-border bg-surface-raised p-3.5',
+                      'text-left transition-all duration-150',
+                      'hover:border-border-strong hover:bg-surface-overlay',
+                    )}
                   >
-                    <span>
-                      <span className="block font-medium text-white">{room.name}</span>
-                      <span className="block text-xs text-muted">{room.room_code}</span>
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent/30 to-accent-2/20 text-white/80"
+                      aria-hidden="true"
+                    >
+                      <Music size={17} strokeWidth={2} />
                     </span>
-                    <span className="text-sm text-accent">Join</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-white">
+                        {room.name}
+                      </span>
+                      <span className="block font-mono text-xs uppercase tracking-wider text-subtle">
+                        {room.room_code}
+                      </span>
+                    </span>
+                    <ChevronRight
+                      size={17}
+                      strokeWidth={2.5}
+                      className="shrink-0 text-subtle"
+                      aria-hidden="true"
+                    />
                   </button>
                 ))}
               </div>
-            )}
-            {profileResults.length > 0 && (
-              <div className="mt-4 space-y-2 text-left">
-                <h3 className="font-semibold text-white">Users</h3>
+            </section>
+          )}
+
+          {profileResults.length > 0 && (
+            <section>
+              <h2 className="mb-2.5 flex items-center gap-2 text-meta uppercase text-subtle">
+                <Users size={13} strokeWidth={2.5} aria-hidden="true" />
+                People
+              </h2>
+              <div className="space-y-2">
                 {profileResults.map((profile) => (
                   <button
                     key={profile.id}
                     type="button"
                     onClick={() => navigate(`/u/${profile.username}`)}
-                    className="flex w-full items-center justify-between rounded-lg border border-border p-3 text-left hover:bg-surface-overlay"
+                    className={cx(
+                      'flex w-full items-center gap-3 rounded-card border border-border bg-surface-raised p-3.5',
+                      'text-left transition-all duration-150',
+                      'hover:border-border-strong hover:bg-surface-overlay',
+                    )}
                   >
-                    <span>
-                      <span className="block font-medium text-white">{profile.display_name}</span>
-                      <span className="block text-xs text-muted">@{profile.username}</span>
+                    <Avatar
+                      displayName={profile.display_name}
+                      avatarUrl={profile.avatar_url}
+                      size="sm"
+                      identityKey={profile.id}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-white">
+                        {profile.display_name}
+                      </span>
+                      <span className="block truncate text-xs text-subtle">
+                        @{profile.username}
+                      </span>
                     </span>
-                    <span className="text-sm text-accent">View profile</span>
+                    <ChevronRight
+                      size={17}
+                      strokeWidth={2.5}
+                      className="shrink-0 text-subtle"
+                      aria-hidden="true"
+                    />
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </section>
+          )}
         </div>
       )}
 
       {/* Tab: QR Code */}
       {activeTab === 'qr' && (
-        <div className="mt-8 space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-4">
-              Scan a QR Code
-            </label>
-            <div className="rounded-lg border border-border bg-surface-raised p-6 text-center">
-              {cameraActive ? (
-                <video ref={videoRef} className="mx-auto aspect-video w-full max-w-md rounded-lg bg-black object-cover" playsInline muted />
-              ) : (
-                <p className="py-12 text-muted">Enable your camera to scan a room QR code.</p>
-              )}
-              <canvas ref={canvasRef} className="hidden" />
-              <p className="mt-4 text-sm text-muted">
-                Point your camera at the QR code generated by a room.
-              </p>
-            </div>
-            <Button
-              type="button"
-              onClick={() => setCameraActive((active) => !active)}
-              className="w-full mt-4 bg-surface-raised hover:bg-surface-overlay"
-            >
-              {cameraActive ? 'Stop Camera' : 'Enable Camera'}
-            </Button>
+        <div
+          role="tabpanel"
+          id={tabPanelId('join', 'qr')}
+          aria-labelledby={tabId('join', 'qr')}
+          className="mt-8 animate-enter space-y-4"
+        >
+          <div className="overflow-hidden rounded-panel border border-border bg-surface-raised">
+            {cameraActive ? (
+              <div className="relative bg-black">
+                <video
+                  ref={videoRef}
+                  className="mx-auto aspect-video w-full object-cover"
+                  playsInline
+                  muted
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <div className="h-40 w-40 rounded-2xl border-2 border-accent/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center px-6 py-14 text-center">
+                <span
+                  className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-soft text-accent"
+                  aria-hidden="true"
+                >
+                  <ScanLine size={24} strokeWidth={2} />
+                </span>
+                <p className="text-section text-white">Scan a room QR code</p>
+                <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
+                  Point your camera at the QR code shown in a room to join instantly.
+                </p>
+              </div>
+            )}
+
+            <canvas ref={canvasRef} className="hidden" />
           </div>
+
+          <Button
+            type="button"
+            onClick={() => setCameraActive((active) => !active)}
+            variant={cameraActive ? 'secondary' : 'primary'}
+            size="lg"
+            fullWidth
+          >
+            <Camera size={16} strokeWidth={2.25} aria-hidden="true" />
+            {cameraActive ? 'Stop Camera' : 'Enable Camera'}
+          </Button>
         </div>
       )}
 
       {/* Info Section */}
-      <div className="mt-12 rounded-lg border border-border bg-surface-raised p-6">
-        <h3 className="font-semibold">How to join</h3>
-        <ul className="mt-4 space-y-3 text-sm text-muted">
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">→</span>
-            <span>Get a room code from the room creator</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">→</span>
-            <span>Enter the code above or scan the QR code</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">→</span>
-            <span>You'll be taken to the room if it exists and is accessible</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">→</span>
-            <span>Start voting and suggesting songs immediately</span>
-          </li>
-        </ul>
+      <div className="mt-12 rounded-card border border-border bg-surface-raised p-5 sm:p-6">
+        <h2 className="text-section">How to join</h2>
+        <ol className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+          {[
+            'Get a room code from the room creator',
+            'Enter the code above or scan the QR code',
+            "You'll be taken to the room if it exists and is accessible",
+            'Start voting and suggesting songs immediately',
+          ].map((line, index) => (
+            <li key={line} className="flex gap-3">
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft font-mono text-[11px] font-bold text-accent"
+                aria-hidden="true"
+              >
+                {index + 1}
+              </span>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ol>
       </div>
-    </div>
+    </PageShell>
   )
 }

@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Check, EyeOff, Globe, Lock, Sparkles } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { cx } from '@/components/ui/cx'
+import { PageHeader, PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { createRoom } from '@/lib/rooms'
 import type { RoomVisibility } from '@/types/room'
 
@@ -13,6 +17,8 @@ export function CreateRoomPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  usePageTitle('Create a room')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -95,61 +101,57 @@ export function CreateRoomPage() {
       value: 'public' as RoomVisibility,
       label: 'Public',
       description: 'Anyone can discover and join this room',
+      icon: Globe,
     },
     {
       value: 'unlisted' as RoomVisibility,
       label: 'Unlisted',
       description: 'Only accessible via room code, link, or QR code',
+      icon: EyeOff,
     },
     {
       value: 'private' as RoomVisibility,
       label: 'Private',
       description: 'Only invited users can join',
+      icon: Lock,
     },
   ]
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <div>
-        <h1 className="text-3xl font-bold">Create a Room</h1>
-        <p className="mt-2 text-muted">
-          Start your own music room where everyone has equal voting power
-        </p>
-      </div>
+    <PageShell width="narrow">
+      <PageHeader
+        eyebrow="New room"
+        title="Create a Room"
+        description="Start a room where everyone votes equally. You start playback for the crowd."
+      />
 
-      <form onSubmit={handleSubmit} className="mt-10 space-y-6">
+      <form onSubmit={handleSubmit} className="mt-10 space-y-7" noValidate>
         {error && <Alert variant="error">{error}</Alert>}
-        {success && (
-          <Alert variant="success">Room created! Redirecting...</Alert>
-        )}
+        {success && <Alert variant="success">Room created! Redirecting...</Alert>}
 
         {/* Room Name */}
-        <div>
-          <Input
-            id="name"
-            name="name"
-            label="Room Name *"
-            type="text"
-            placeholder="e.g., Friday Night Vibes"
-            value={formData.name}
-            onChange={handleChange}
-            disabled={loading}
-            maxLength={50}
-            required
-          />
-          <div className="mt-1 flex justify-between">
-            <p className="text-xs text-muted">
-              What should we call your room?
-            </p>
-            <p className="text-xs text-muted">
-              {formData.name.length}/50
-            </p>
-          </div>
-        </div>
+        <Input
+          id="name"
+          name="name"
+          label="Room name"
+          type="text"
+          placeholder="e.g., Friday Night Vibes"
+          value={formData.name}
+          onChange={handleChange}
+          disabled={loading}
+          maxLength={50}
+          required
+          hint={
+            <span className="flex justify-between gap-4">
+              <span>What should we call your room?</span>
+              <span className="font-mono tabular-nums">{formData.name.length}/50</span>
+            </span>
+          }
+        />
 
         {/* Description */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium">
+        <div className="space-y-2">
+          <label htmlFor="description" className="block text-sm font-medium text-white">
             Description
           </label>
           <textarea
@@ -161,61 +163,91 @@ export function CreateRoomPage() {
             disabled={loading}
             maxLength={500}
             rows={4}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-white placeholder-muted/50 focus:border-accent focus:outline-none disabled:opacity-50"
+            className={cx(
+              'w-full resize-y rounded-xl border border-border bg-surface-sunken px-4 py-3',
+              'text-sm leading-relaxed text-white outline-none transition-colors duration-150',
+              'placeholder:text-subtle hover:border-border-strong',
+              'focus:border-accent focus:bg-surface disabled:cursor-not-allowed disabled:opacity-50',
+            )}
           />
-          <div className="mt-1 flex justify-between">
-            <p className="text-xs text-muted">
-              Tell people what your room is about (optional)
-            </p>
-            <p className="text-xs text-muted">
-              {formData.description.length}/500
-            </p>
-          </div>
+          <p className="flex justify-between gap-4 text-xs text-muted">
+            <span>Tell people what your room is about (optional)</span>
+            <span className="font-mono tabular-nums">{formData.description.length}/500</span>
+          </p>
         </div>
 
         {/* Visibility */}
-        <div>
-          <label className="block text-sm font-medium mb-4">
-            Room Visibility *
-          </label>
-          <div className="space-y-3">
-            {visibilityOptions.map((option) => (
-              <label
-                key={option.value}
-                className="flex items-start gap-3 rounded-lg border border-border bg-surface-raised p-4 cursor-pointer transition-colors hover:bg-surface-overlay"
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  value={option.value}
-                  checked={formData.visibility === option.value}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-white">{option.label}</p>
-                  <p className="text-sm text-muted">{option.description}</p>
-                </div>
-              </label>
-            ))}
+        <fieldset>
+          <legend className="mb-3 block text-sm font-medium text-white">
+            Room visibility
+          </legend>
+          <div className="space-y-2.5">
+            {visibilityOptions.map((option) => {
+              const isSelected = formData.visibility === option.value
+              const OptionIcon = option.icon
+
+              return (
+                <label
+                  key={option.value}
+                  className={cx(
+                    'flex cursor-pointer items-start gap-3.5 rounded-card border p-4',
+                    'transition-all duration-150',
+                    'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent',
+                    isSelected
+                      ? 'border-accent/60 bg-accent-soft'
+                      : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface-overlay',
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value={option.value}
+                    checked={isSelected}
+                    onChange={handleChange}
+                    disabled={loading}
+                    className="sr-only"
+                  />
+                  <span
+                    className={cx(
+                      'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+                      isSelected ? 'bg-accent text-white' : 'bg-surface-overlay text-subtle',
+                    )}
+                    aria-hidden="true"
+                  >
+                    <OptionIcon size={17} strokeWidth={2.25} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-white">{option.label}</span>
+                    <span className="mt-0.5 block text-sm leading-relaxed text-muted">
+                      {option.description}
+                    </span>
+                  </span>
+                  {isSelected ? (
+                    <Check
+                      size={17}
+                      strokeWidth={3}
+                      className="mt-2.5 shrink-0 text-accent"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </label>
+              )
+            })}
           </div>
-        </div>
+        </fieldset>
 
         {/* Submit Buttons */}
-        <div className="flex gap-3 pt-6">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-accent hover:bg-accent-hover"
-          >
+        <div className="flex flex-col gap-2.5 pt-1 sm:flex-row">
+          <Button type="submit" disabled={loading} size="lg" className="flex-1">
             {loading ? 'Creating...' : 'Create Room'}
           </Button>
           <Button
             type="button"
             onClick={() => navigate(-1)}
             disabled={loading}
-            className="flex-1 bg-surface-raised hover:bg-surface-overlay"
+            variant="secondary"
+            size="lg"
+            className="flex-1"
           >
             Cancel
           </Button>
@@ -223,27 +255,30 @@ export function CreateRoomPage() {
       </form>
 
       {/* Info Section */}
-      <div className="mt-12 rounded-lg border border-border bg-surface-raised p-6">
-        <h3 className="font-semibold">How it works</h3>
-        <ul className="mt-4 space-y-3 text-sm text-muted">
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">✓</span>
-            <span>Once you create a room, you can share it with a URL or QR code</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">✓</span>
-            <span>Everyone in the room has equal permissions—no special host powers</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">✓</span>
-            <span>Members can suggest songs and vote to determine what plays next</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 text-accent">✓</span>
-            <span>The room stays active as long as there are members in it</span>
-          </li>
+      <div className="mt-12 rounded-card border border-border bg-surface-raised p-5 sm:p-6">
+        <h2 className="flex items-center gap-2 text-section">
+          <Sparkles size={16} strokeWidth={2.25} className="text-accent" aria-hidden="true" />
+          How it works
+        </h2>
+        <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
+          {[
+            'Share the room with a link or QR code so others can join',
+            'Everyone can suggest songs and vote equally on the play order',
+            'As the room creator, you start and advance playback for everyone',
+            'The room stays active as long as there are members in it',
+          ].map((line) => (
+            <li key={line} className="flex gap-3">
+              <Check
+                size={15}
+                strokeWidth={3}
+                className="mt-1 shrink-0 text-accent"
+                aria-hidden="true"
+              />
+              <span>{line}</span>
+            </li>
+          ))}
         </ul>
       </div>
-    </div>
+    </PageShell>
   )
 }

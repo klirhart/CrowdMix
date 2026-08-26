@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Lock, Mail } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePageTitle } from '@/hooks/usePageTitle'
 import { getAuthErrorMessage, validateEmail, validatePassword } from '@/lib/auth-validation'
 import { getSupabaseClient } from '@/lib/supabase'
 
@@ -17,13 +19,21 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  usePageTitle('Log in')
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
 
+    const formData = new FormData(event.currentTarget)
+    const nextEmail = String(formData.get('email') ?? '')
+    const nextPassword = String(formData.get('password') ?? '')
+    setEmail(nextEmail)
+    setPassword(nextPassword)
+
     const nextFieldErrors = {
-      email: validateEmail(email) ?? undefined,
-      password: validatePassword(password) ?? undefined,
+      email: validateEmail(nextEmail) ?? undefined,
+      password: validatePassword(nextPassword) ?? undefined,
     }
 
     setFieldErrors(nextFieldErrors)
@@ -42,8 +52,8 @@ export function LoginPage() {
     try {
       const supabase = getSupabaseClient()
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+        email: nextEmail.trim(),
+        password: nextPassword,
       })
 
       if (signInError) {
@@ -69,7 +79,7 @@ export function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
+        <h1 className="text-title">Welcome back</h1>
         <p className="text-sm text-muted">Log in to join the crowd.</p>
       </div>
 
@@ -85,10 +95,12 @@ export function LoginPage() {
           name="email"
           type="email"
           autoComplete="email"
+          placeholder="you@example.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           error={fieldErrors.email}
           disabled={loading}
+          icon={<Mail size={16} strokeWidth={2.25} />}
         />
 
         <Input
@@ -96,22 +108,27 @@ export function LoginPage() {
           name="password"
           type="password"
           autoComplete="current-password"
+          placeholder="••••••••"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={fieldErrors.password}
           disabled={loading}
+          icon={<Lock size={16} strokeWidth={2.25} />}
         />
 
         {error ? <Alert variant="error">{error}</Alert> : null}
 
-        <Button type="submit" fullWidth disabled={loading}>
+        <Button type="submit" formNoValidate fullWidth size="lg" disabled={loading} className="mt-2">
           {loading ? 'Logging in...' : 'Log in'}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
-        <Link to="/signup" className="font-medium text-accent hover:text-accent-hover">
+        <Link
+          to="/signup"
+          className="font-semibold text-accent transition-colors hover:text-accent-hover"
+        >
           Sign up
         </Link>
       </p>

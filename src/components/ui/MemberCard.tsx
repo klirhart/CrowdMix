@@ -1,59 +1,96 @@
-import { Avatar } from './Avatar'
+import { Crown } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Avatar } from '@/components/ui/Avatar'
+import { Badge } from '@/components/ui/Badge'
+import { cx } from '@/components/ui/cx'
 
 interface MemberCardProps {
   name: string
-  username: string
+  username?: string
+  avatarUrl?: string | null
   isOnline: boolean
+  /** Highlights the signed-in user's own row. */
+  isYou?: boolean
+  isCreator?: boolean
+  /** Stable id used for the avatar tint so a member keeps the same color. */
+  identityKey?: string
+  /** True when only the member id is known, so initials would be meaningless. */
+  unknownIdentity?: boolean
   profileUrl?: string
 }
 
 export function MemberCard({
   name,
   username,
+  avatarUrl,
   isOnline,
+  isYou = false,
+  isCreator = false,
+  identityKey,
+  unknownIdentity = false,
   profileUrl,
 }: MemberCardProps) {
   const content = (
-    <div className="flex items-center gap-3">
-      <div className="relative flex-shrink-0">
-        <Avatar displayName={name} size="md" />
-        {isOnline && (
-          <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-surface" />
+    <>
+      <div className="relative shrink-0">
+        <Avatar
+          displayName={name}
+          avatarUrl={avatarUrl}
+          size="sm"
+          identityKey={identityKey}
+          fallback={unknownIdentity ? 'icon' : 'initials'}
+        />
+        <span
+          className={cx(
+            'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-surface-raised',
+            isOnline ? 'bg-online' : 'bg-subtle',
+          )}
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5">
+          <span
+            className={cx(
+              'truncate text-sm font-semibold',
+              isOnline ? 'text-white' : 'text-muted',
+            )}
+          >
+            {name}
+          </span>
+          {isCreator ? (
+            <Crown
+              size={13}
+              strokeWidth={2.5}
+              className="shrink-0 text-amber-400"
+              aria-label="Room creator"
+            />
+          ) : null}
+        </p>
+        {username ? (
+          <p className="truncate text-xs text-subtle">@{username}</p>
+        ) : (
+          <p className="text-xs text-subtle">{isOnline ? 'Listening' : 'Away'}</p>
         )}
       </div>
-      <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium truncate ${isOnline ? 'text-white' : 'text-muted'}`}>
-          {name}
-        </p>
-        <p className="text-xs text-muted truncate">@{username}</p>
-      </div>
-    </div>
+
+      {isYou ? <Badge tone="accent">You</Badge> : null}
+    </>
+  )
+
+  const shell = cx(
+    'flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors duration-150',
+    isOnline ? 'hover:bg-surface-overlay' : 'opacity-60 hover:opacity-100',
   )
 
   if (profileUrl) {
     return (
-      <a
-        href={profileUrl}
-        className={`rounded-lg p-3 transition-colors ${
-          isOnline
-            ? 'border border-border bg-surface-raised hover:bg-surface-overlay'
-            : 'border border-border bg-surface-raised/50 opacity-60'
-        }`}
-      >
+      <Link to={profileUrl} className={shell}>
         {content}
-      </a>
+      </Link>
     )
   }
 
-  return (
-    <div
-      className={`rounded-lg p-3 ${
-        isOnline
-          ? 'border border-border bg-surface-raised'
-          : 'border border-border bg-surface-raised/50 opacity-60'
-      }`}
-    >
-      {content}
-    </div>
-  )
+  return <div className={shell}>{content}</div>
 }
