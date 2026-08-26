@@ -1,18 +1,51 @@
+import { CircleAlert, CircleCheck, Info } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { cx } from './cx'
+
+type AlertVariant = 'error' | 'info' | 'success'
+
 interface AlertProps {
-  variant?: 'error' | 'info' | 'success'
-  children: React.ReactNode
+  variant?: AlertVariant
+  children: ReactNode
+  className?: string
 }
 
-const variantClasses = {
-  error: 'border-red-500/30 bg-red-500/10 text-red-200',
-  info: 'border-border bg-surface text-muted',
-  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+const variantClasses: Record<AlertVariant, string> = {
+  error: 'border-live/30 bg-live/10 text-red-100',
+  info: 'border-border bg-surface-raised text-muted',
+  success: 'border-online/30 bg-online/10 text-emerald-100',
 }
 
-export function Alert({ variant = 'info', children }: AlertProps) {
+const variantIcons: Record<AlertVariant, typeof Info> = {
+  error: CircleAlert,
+  info: Info,
+  success: CircleCheck,
+}
+
+const iconClasses: Record<AlertVariant, string> = {
+  error: 'text-live',
+  info: 'text-subtle',
+  success: 'text-online',
+}
+
+export function Alert({ variant = 'info', children, className = '' }: AlertProps) {
+  const Icon = variantIcons[variant]
+
   return (
-    <div className={`rounded-xl border px-4 py-3 text-sm ${variantClasses[variant]}`}>
-      {children}
+    <div
+      role={variant === 'error' ? 'alert' : undefined}
+      className={cx(
+        'flex items-start gap-3 rounded-xl border px-4 py-3 text-sm',
+        variantClasses[variant],
+        className,
+      )}
+    >
+      <Icon
+        size={17}
+        className={cx('mt-px shrink-0', iconClasses[variant])}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1 leading-relaxed">{children}</div>
     </div>
   )
 }

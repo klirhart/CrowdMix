@@ -18,6 +18,7 @@ interface AuthContextValue {
   profile: Profile | null
   loading: boolean
   isConfigured: boolean
+  applyProfile: (nextProfile: Profile) => void
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -44,6 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
     }
   }, [isConfigured])
+
+  const applyProfile = useCallback((nextProfile: Profile) => {
+    setProfile(nextProfile)
+  }, [])
 
   const refreshProfile = useCallback(async () => {
     await loadProfile(user)
@@ -115,10 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       isConfigured,
+      applyProfile,
       refreshProfile,
       signOut,
     }),
-    [user, session, profile, loading, isConfigured, refreshProfile, signOut],
+    [user, session, profile, loading, isConfigured, applyProfile, refreshProfile, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

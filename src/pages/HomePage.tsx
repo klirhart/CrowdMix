@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Avatar } from '@/components/ui/Avatar'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Compass, Music, Radio, Search, SquarePlus } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
+import { Avatar } from '@/components/ui/Avatar'
+import { SectionHeading } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { RoomCard } from '@/components/ui/RoomCard'
+import { RoomCardSkeleton } from '@/components/ui/Skeleton'
+import { cx } from '@/components/ui/cx'
+import { PageHeader, PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePageTitle } from '@/hooks/usePageTitle'
 import {
   getPublicRooms,
   getRoomsCreatedByUser,
@@ -11,35 +18,76 @@ import {
 } from '@/lib/rooms'
 import type { Room } from '@/types/room'
 
-function RoomCard({ room, showCreator = true }: { room: Room; showCreator?: boolean }) {
+const quickActions = [
+  {
+    to: '/create-room',
+    label: 'Create Room',
+    description: 'Start a new session',
+    icon: SquarePlus,
+    primary: true,
+  },
+  {
+    to: '/join-room',
+    label: 'Join Room',
+    description: 'Enter a code or scan',
+    icon: Radio,
+    primary: false,
+  },
+  {
+    to: '/join-room',
+    label: 'Search Rooms',
+    description: 'Find rooms and people',
+    icon: Search,
+    primary: false,
+  },
+]
+
+function QuickActions() {
   return (
-    <div className="rounded-lg border border-border bg-surface-raised p-4 transition-colors hover:bg-surface-overlay">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="font-semibold text-white">{room.name}</h3>
-          {showCreator && (
-            <p className="mt-1 text-sm text-muted">Created by @{room.created_by}</p>
-          )}
-          {room.description && (
-            <p className="mt-2 text-sm text-muted line-clamp-2">{room.description}</p>
-          )}
-          <p className="mt-2 text-xs text-muted">Code: {room.room_code}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {room.is_active && (
-            <span className="flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-1 text-xs font-semibold text-red-400 whitespace-nowrap">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-              LIVE
+    <div className="grid gap-3 sm:grid-cols-3">
+      {quickActions.map((action) => {
+        const Icon = action.icon
+
+        return (
+          <Link
+            key={action.label}
+            to={action.to}
+            className={cx(
+              'group flex items-center gap-3.5 rounded-card border p-4',
+              'transition-all duration-200 hover:-translate-y-0.5',
+              action.primary
+                ? 'border-accent/40 bg-gradient-to-br from-accent/20 to-accent-2/10 hover:border-accent/70 hover:shadow-glow'
+                : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface-overlay hover:shadow-raised',
+            )}
+          >
+            <span
+              className={cx(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors',
+                action.primary
+                  ? 'bg-accent text-white'
+                  : 'bg-surface-overlay text-accent group-hover:bg-accent group-hover:text-white',
+              )}
+              aria-hidden="true"
+            >
+              <Icon size={18} strokeWidth={2.25} />
             </span>
-          )}
-        </div>
-      </div>
-      <Link
-        to={`/join-room?room=${room.room_code}`}
-        className="mt-4 block w-full rounded-lg bg-accent py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
-      >
-        Join
-      </Link>
+            <span className="min-w-0">
+              <span className="block truncate font-semibold text-white">{action.label}</span>
+              <span className="block truncate text-xs text-subtle">{action.description}</span>
+            </span>
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
+function RoomGrid({ rooms }: { rooms: Room[] }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {rooms.map((room) => (
+        <RoomCard key={room.id} room={room} />
+      ))}
     </div>
   )
 }
@@ -51,6 +99,8 @@ export function HomePage() {
   const [publicRooms, setPublicRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  usePageTitle('Home')
 
   useEffect(() => {
     const loadRooms = async () => {
@@ -81,121 +131,118 @@ export function HomePage() {
     loadRooms()
   }, [profile, isConfigured])
 
+  const memberRooms = profile
+    ? joinedRooms.filter((room) => room.created_by !== profile.id)
+    : joinedRooms
+
   if (loading) {
-    return <LoadingSpinner label="Loading rooms..." />
+    return (
+      <PageShell>
+        <div className="h-10 w-72 max-w-full animate-pulse rounded-lg bg-surface-overlay/70" />
+        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((key) => (
+            <div
+              key={key}
+              className="h-[74px] animate-pulse rounded-card border border-border bg-surface-raised"
+            />
+          ))}
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((key) => (
+            <RoomCardSkeleton key={key} />
+          ))}
+        </div>
+      </PageShell>
+    )
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {profile ? `Welcome back, ${profile.display_name}` : 'Home'}
-          </h1>
-          <p className="mt-2 text-muted">
-            Create rooms, discover music, and join the crowd
-          </p>
-        </div>
-        {profile && (
-          <Link
-            to={`/u/${profile.username}`}
-            className="flex items-center gap-3 rounded-lg border border-border bg-surface-raised px-4 py-2 transition-colors hover:bg-surface-overlay"
-          >
-            <Avatar displayName={profile.display_name} avatarUrl={profile.avatar_url} size="sm" />
-            <span className="text-sm font-medium">@{profile.username}</span>
-          </Link>
-        )}
+    <PageShell>
+      <PageHeader
+        eyebrow="Your dashboard"
+        title={profile ? `Welcome back, ${profile.display_name}` : 'Home'}
+        description="Create rooms, discover music, and join the crowd."
+        action={
+          profile ? (
+            <Link
+              to={`/u/${profile.username}`}
+              className={cx(
+                'inline-flex items-center gap-2.5 rounded-xl border border-border bg-surface-raised px-3 py-2',
+                'transition-all duration-150 hover:border-border-strong hover:bg-surface-overlay',
+              )}
+            >
+              <Avatar
+                displayName={profile.display_name}
+                avatarUrl={profile.avatar_url}
+                size="sm"
+                identityKey={profile.id}
+              />
+              <span className="text-sm font-semibold">@{profile.username}</span>
+            </Link>
+          ) : null
+        }
+      />
+
+      <div className="mt-8">
+        <QuickActions />
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <Link
-          to="/create-room"
-          className="rounded-lg bg-accent px-6 py-4 text-center font-semibold text-white transition-colors hover:bg-accent-hover"
-        >
-          + Create Room
-        </Link>
-        <Link
-          to="/join-room"
-          className="rounded-lg border border-border bg-surface-raised px-6 py-4 text-center font-semibold text-white transition-colors hover:bg-surface-overlay"
-        >
-          Join Room
-        </Link>
-        <Link
-          to="/home"
-          className="rounded-lg border border-border bg-surface-raised px-6 py-4 text-center font-semibold text-white transition-colors hover:bg-surface-overlay"
-        >
-          Search Rooms
-        </Link>
-      </div>
-
-      {/* Your Rooms */}
-      {error && <Alert variant="error">{error}</Alert>}
-
-      {joinedRooms.length > 0 && (
-        <section className="mt-12">
-          <h2 className="text-xl font-bold">Your Rooms</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {joinedRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
-            ))}
-          </div>
-        </section>
+      {error && (
+        <Alert variant="error" className="mt-8">
+          {error}
+        </Alert>
       )}
 
-      {/* Rooms You Created */}
       {createdRooms.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-xl font-bold">Rooms You Created</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {createdRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
-            ))}
-          </div>
+          <SectionHeading
+            title="Rooms You Created"
+            description="Rooms where you are the creator"
+            icon={<SquarePlus size={17} strokeWidth={2.25} />}
+            className="mb-5"
+          />
+          <RoomGrid rooms={createdRooms} />
         </section>
       )}
 
-      {/* Discover Rooms */}
+      {memberRooms.length > 0 && (
+        <section className="mt-12">
+          <SectionHeading
+            title="Rooms You Joined"
+            description="Rooms where you are a member"
+            icon={<Music size={17} strokeWidth={2.25} />}
+            className="mb-5"
+          />
+          <RoomGrid rooms={memberRooms} />
+        </section>
+      )}
+
       <section className="mt-12">
-        <h2 className="text-xl font-bold">Discover Public Rooms</h2>
-        <p className="mt-2 text-sm text-muted">
-          Find and join public rooms from the community
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {publicRooms.length > 0 ? (
-            publicRooms.map((room) => (
-              <RoomCard key={room.id} room={room} />
-            ))
-          ) : (
-            <p className="text-muted col-span-full">No public rooms yet. Create one!</p>
-          )}
-        </div>
+        <SectionHeading
+          title="Discover Public Rooms"
+          description="Find and join public rooms from the community"
+          icon={<Compass size={17} strokeWidth={2.25} />}
+          className="mb-5"
+        />
+        {publicRooms.length > 0 ? (
+          <RoomGrid rooms={publicRooms} />
+        ) : (
+          <EmptyState
+            icon={<Compass size={24} strokeWidth={2} />}
+            title="No public rooms yet"
+            description="Be the first to start one and invite the crowd."
+            action={
+              <Link
+                to="/create-room"
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-white shadow-raised transition-all duration-150 hover:bg-accent-hover hover:shadow-glow active:scale-[0.98]"
+              >
+                <SquarePlus size={15} strokeWidth={2.5} aria-hidden="true" />
+                Create Room
+              </Link>
+            }
+          />
+        )}
       </section>
-
-      {/* Empty State */}
-      {joinedRooms.length === 0 && createdRooms.length === 0 && (
-        <section className="mt-12 rounded-lg border border-border bg-surface-raised p-8 text-center">
-          <h3 className="text-lg font-semibold">Get started with CrowdMix</h3>
-          <p className="mt-2 text-muted">
-            Create your first room or join an existing one to start voting
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
-              to="/create-room"
-              className="rounded-lg bg-accent px-6 py-2 font-semibold text-white transition-colors hover:bg-accent-hover"
-            >
-              Create Room
-            </Link>
-            <Link
-              to="/join-room"
-              className="rounded-lg border border-border bg-surface-overlay px-6 py-2 font-semibold text-white transition-colors hover:bg-surface-overlay"
-            >
-              Join Room
-            </Link>
-          </div>
-        </section>
-      )}
-    </div>
+    </PageShell>
   )
 }

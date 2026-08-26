@@ -4,6 +4,7 @@ export type {
   RoomCreate,
   RoomUpdate,
   RoomMember,
+  RoomMembershipHistory,
   RoomWithMembers,
   RoomVisibility,
 } from '@/types/room'

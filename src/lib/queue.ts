@@ -7,7 +7,23 @@ import type {
   Vote,
   QueueStatus,
 } from '@/types/queue'
+import { fetchProfilesByIds } from '@/lib/profiles'
 import { getSupabaseClient } from '@/lib/supabase'
+
+async function findSongByYoutubeId(youtubeId: string): Promise<Song | null> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase
+    .from('songs')
+    .select()
+    .eq('youtube_id', youtubeId)
+    .limit(1)
+
+  if (error) {
+    throw error
+  }
+
+  return (data?.[0] as Song) ?? null
+}
 
 /**
  * Create or get a song
@@ -21,22 +37,11 @@ export async function upsertSong(
 ): Promise<Song> {
   const supabase = getSupabaseClient()
 
-  // Try to get existing song
-  const { data: existing, error: selectError } = await supabase
-    .from('songs')
-    .select()
-    .eq('youtube_id', youtubeId)
-    .single()
-
+  const existing = await findSongByYoutubeId(youtubeId)
   if (existing) {
-    return existing as Song
+    return existing
   }
 
-  if (selectError && selectError.code !== 'PGRST116') {
-    throw selectError
-  }
-
-  // Create new song
   const { data, error } = await supabase
     .from('songs')
     .insert({
@@ -49,11 +54,20 @@ export async function upsertSong(
     .select()
     .single()
 
-  if (error) {
+  if (!error) {
+    return data as Song
+  }
+
+  if (error.code !== '23505') {
     throw error
   }
 
-  return data as Song
+  const raced = await findSongByYoutubeId(youtubeId)
+  if (!raced) {
+    throw error
+  }
+
+  return raced
 }
 
 /**
@@ -78,6 +92,9 @@ export async function suggestSong(
     .single()
 
   if (error) {
+    if (error.code === '23505') {
+      throw new Error('That song is already in the queue.')
+    }
     throw error
   }
 
@@ -87,7 +104,10 @@ export async function suggestSong(
 /**
  * Get queue items for a room
  */
-export async function getRoomQueue(roomId: string): Promise<QueueItemWithDetails[]> {
+export async function getRoomQueue(
+  roomId: string,
+  userId?: string,
+): Promise<QueueItemWithDetails[]> {
   const supabase = getSupabaseClient()
 
   const { data, error } = await supabase
@@ -95,19 +115,19 @@ export async function getRoomQueue(roomId: string): Promise<QueueItemWithDetails
     .select(
       `
       *,
-      songs(*),
-      suggested_by_profile:profiles(username, display_name)
+      songs(*)
       `,
     )
     .eq('room_id', roomId)
     .in('status', ['pending', 'playing'])
     .order('status', { ascending: false })
+    .order('created_at', { ascending: true })
 
   if (error) {
     throw error
   }
 
-  if (!data) {
+  if (!data || data.length === 0) {
     return []
   }
 
@@ -117,25 +137,53 @@ export async function getRoomQueue(roomId: string): Promise<QueueItemWithDetails
       song: item.song || item.songs,
     }),
   )
-  const itemsWithVotes = await Promise.all(
-    queueItems.map(async (item) => {
-      const { count, error: voteError } = await supabase
-        .from('votes')
-        .select('*', { count: 'exact', head: true })
-        .eq('queue_item_id', item.id)
+  const queueItemIds = queueItems.map((item) => item.id)
+  const [profiles, votesResult] = await Promise.all([
+    fetchProfilesByIds(queueItems.map((item) => item.suggested_by)),
+    supabase
+      .from('votes')
+      .select('queue_item_id, user_id')
+      .in('queue_item_id', queueItemIds),
+  ])
 
-      if (voteError) {
-        throw voteError
-      }
+  if (votesResult.error) {
+    throw votesResult.error
+  }
 
-      return {
-        ...item,
-        vote_count: count ?? 0,
-      }
-    }),
-  )
+  const voteCounts = new Map<string, number>()
+  const votedItemIds = new Set<string>()
+  for (const vote of votesResult.data || []) {
+    voteCounts.set(vote.queue_item_id, (voteCounts.get(vote.queue_item_id) ?? 0) + 1)
+    if (userId && vote.user_id === userId) {
+      votedItemIds.add(vote.queue_item_id)
+    }
+  }
 
-  return itemsWithVotes
+  const itemsWithVotes = queueItems.map((item) => {
+    const profile = profiles.get(item.suggested_by)
+    return {
+      ...item,
+      vote_count: voteCounts.get(item.id) ?? 0,
+      user_voted: votedItemIds.has(item.id),
+      suggested_by_profile: profile
+        ? { username: profile.username, display_name: profile.display_name }
+        : item.suggested_by_profile,
+    }
+  })
+
+  // Mirror advance_room_playback's selection rule (most votes, then oldest) so
+  // the positions shown under "Up Next" are the real play order.
+  return itemsWithVotes.sort((a, b) => {
+    if (a.status !== b.status) {
+      return a.status === 'playing' ? -1 : 1
+    }
+
+    if ((b.vote_count ?? 0) !== (a.vote_count ?? 0)) {
+      return (b.vote_count ?? 0) - (a.vote_count ?? 0)
+    }
+
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  })
 }
 
 /**
@@ -211,10 +259,32 @@ export async function getNextSongToPlay(roomId: string): Promise<string | null> 
 
 /**
  * Atomically finish the current song and start the highest-voted next song.
+ * Pass `fromItemId` when a specific playing row ended so a concurrent client
+ * that already advanced cannot skip the next track.
  */
-export async function advanceRoomPlayback(roomId: string): Promise<string | null> {
+export async function advanceRoomPlayback(
+  roomId: string,
+  fromItemId?: string | null,
+): Promise<string | null> {
   const supabase = getSupabaseClient()
   const { data, error } = await supabase.rpc('advance_room_playback', {
+    p_room_id: roomId,
+    p_from_item_id: fromItemId ?? null,
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return data as string | null
+}
+
+/**
+ * Promote the next pending song only if the room is idle.
+ */
+export async function ensureRoomPlaying(roomId: string): Promise<string | null> {
+  const supabase = getSupabaseClient()
+  const { data, error } = await supabase.rpc('ensure_room_playing', {
     p_room_id: roomId,
   })
 
@@ -327,11 +397,26 @@ export async function voteOnSong(
     .select()
     .single()
 
-  if (error) {
+  if (!error) {
+    return data as Vote
+  }
+
+  if (error.code !== '23505') {
     throw error
   }
 
-  return data as Vote
+  const { data: existing, error: existingError } = await supabase
+    .from('votes')
+    .select()
+    .eq('queue_item_id', queueItemId)
+    .eq('user_id', userId)
+    .single()
+
+  if (existingError) {
+    throw existingError
+  }
+
+  return existing as Vote
 }
 
 /**

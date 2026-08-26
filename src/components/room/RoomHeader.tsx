@@ -1,0 +1,78 @@
+import { useCallback, useState } from 'react'
+import { Headphones, QrCode } from 'lucide-react'
+import { Badge } from '@/components/ui/Badge'
+import { IconButton } from '@/components/ui/IconButton'
+import { Modal } from '@/components/ui/Modal'
+import { ShareRoomPanel } from '@/components/room/ShareRoomPanel'
+import type { Room } from '@/types/room'
+
+interface RoomHeaderProps {
+  room: Room
+  listenerCount: number
+  copied: boolean
+  roomLink: string
+  qrImageUrl: string
+  onCopyRoomLink: () => void
+}
+
+export function RoomHeader({
+  room,
+  listenerCount,
+  copied,
+  roomLink,
+  qrImageUrl,
+  onCopyRoomLink,
+}: RoomHeaderProps) {
+  const [shareOpen, setShareOpen] = useState(false)
+  const closeShare = useCallback(() => setShareOpen(false), [])
+
+  return (
+    <header className="sticky top-14 z-20 border-b border-border bg-surface/90 backdrop-blur-lg lg:top-0">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">
+              {room.name}
+            </h1>
+            {room.is_active ? (
+              <Badge tone="live" pulse className="max-sm:hidden">
+                LIVE
+              </Badge>
+            ) : null}
+          </div>
+          <p className="mt-0.5 flex items-center gap-2 text-xs text-subtle">
+            <span className="font-mono font-semibold uppercase tracking-widest text-muted">
+              {room.room_code}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1">
+              <Headphones size={12} strokeWidth={2.25} aria-hidden="true" />
+              {listenerCount} listening
+            </span>
+          </p>
+        </div>
+
+        <IconButton
+          label="Invite people"
+          icon={<QrCode size={17} strokeWidth={2.25} />}
+          tone="accent"
+          onClick={() => setShareOpen(true)}
+          aria-haspopup="dialog"
+          aria-expanded={shareOpen}
+          className="shrink-0"
+        />
+      </div>
+
+      <Modal open={shareOpen} title="Invite People" onClose={closeShare}>
+        <ShareRoomPanel
+          roomName={room.name}
+          roomCode={room.room_code}
+          roomLink={roomLink}
+          qrImageUrl={qrImageUrl}
+          copied={copied}
+          onCopyRoomLink={onCopyRoomLink}
+        />
+      </Modal>
+    </header>
+  )
+}

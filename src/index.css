@@ -1,14 +1,50 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-surface: #0f0f12;
-  --color-surface-raised: #18181f;
-  --color-surface-overlay: #22222c;
-  --color-border: #2e2e3a;
+  --color-surface: #0a0a0e;
+  --color-surface-sunken: #06060a;
+  --color-surface-raised: #14141b;
+  --color-surface-overlay: #1e1e28;
+  --color-surface-hover: #26263280;
+  --color-border: #26263a;
+  --color-border-strong: #3a3a52;
   --color-muted: #9494a8;
+  --color-subtle: #6b6b80;
   --color-accent: #a855f7;
   --color-accent-hover: #9333ea;
+  --color-accent-soft: #a855f71f;
+  --color-accent-2: #f0559a;
+  --color-online: #34d399;
+  --color-live: #fb5c6b;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-panel: 0 24px 60px -24px rgb(0 0 0 / 0.8);
+  --shadow-glow: 0 0 0 1px var(--color-accent-soft), 0 12px 40px -12px rgb(168 85 247 / 0.35);
+
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 800;
+
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.015em;
+  --text-title--font-weight: 700;
+
+  --text-section: 1.0625rem;
+  --text-section--line-height: 1.4;
+  --text-section--letter-spacing: -0.005em;
+  --text-section--font-weight: 600;
+
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.04em;
+  --text-meta--font-weight: 500;
 }
 
 @layer base {
@@ -23,28 +59,237 @@
   button,
   a,
   input,
-  textarea {
+  textarea,
+  select,
+  [tabindex] {
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    main > * {
-      animation: page-enter 240ms ease-out both;
-    }
   }
 
   #root {
     @apply min-h-screen;
   }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: white;
+  }
+}
+
+@utility gradient-brand {
+  background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+}
+
+@utility text-gradient-brand {
+  background-image: linear-gradient(135deg, #ffffff 20%, var(--color-accent) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Recently Played must stay a fixed sidebar card. Height utilities on the
+   component were losing to content growth, so lock size here. */
+.recently-played-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 16rem;
+  min-height: 16rem;
+  max-height: 16rem;
+}
+
+.recently-played-list {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.recently-played-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recently-played-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recently-played-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border-strong);
+}
+
+.sidebar-room-list {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.125rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.sidebar-room-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-room-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-room-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border-strong);
+}
+
+.room-chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.room-chat-resize {
+  touch-action: none;
+}
+
+.room-chat-list {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+.room-chat-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.room-chat-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.room-chat-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-border-strong);
+}
+
+.youtube-playback-engine {
+  position: fixed;
+  width: 240px;
+  height: 135px;
+  left: -9999px;
+  top: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.now-playing-shield {
+  pointer-events: auto;
+}
+
+.room-player-volume {
+  appearance: none;
+  background: var(--color-border);
+  border-radius: 999px;
+}
+
+.room-player-volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: white;
+}
+
+.room-player-volume::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: white;
+}
+
+/* YouTube sets inline width/height on the iframe. Beat those so the
+   extra-tall overscan (hides chrome) actually fills the 16:9 frame. */
+.synced-youtube-host > div {
+  position: absolute;
+  inset: 0;
+}
+
+.synced-youtube-host iframe {
+  position: absolute !important;
+  left: -12% !important;
+  top: -28% !important;
+  width: 124% !important;
+  height: 156% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border: 0 !important;
+  pointer-events: none !important;
+}
+
+@media (min-width: 640px) {
+  .recently-played-panel {
+    height: 20rem;
+    min-height: 20rem;
+    max-height: 20rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recently-played-panel {
+    height: auto;
+    min-height: 12rem;
+    max-height: none;
+    flex: 1 1 12rem;
+  }
+}
+
+/* Panels animate in on mount. Applied as an opt-in class so layout chrome
+   (sidebar, tab bar) never re-animates on navigation. */
+@utility animate-enter {
+  animation: page-enter 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes equalizer {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
