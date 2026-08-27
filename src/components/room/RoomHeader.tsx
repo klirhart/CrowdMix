@@ -27,8 +27,8 @@ export function RoomHeader({
   const closeShare = useCallback(() => setShareOpen(false), [])
 
   return (
-    <header className="sticky top-14 z-20 border-b border-border bg-surface/90 backdrop-blur-lg lg:top-0">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5 sm:px-8">
+    <header className="sticky top-14 z-20 min-w-0 max-w-full border-b border-border bg-surface/90 backdrop-blur-lg lg:top-0">
+      <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-8">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">

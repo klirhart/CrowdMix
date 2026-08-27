@@ -30,7 +30,7 @@ function InfoRow({
         </span>
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{children}</span>
+      <span className="text-sm font-semibold text-ink">{children}</span>
     </div>
   )
 }
@@ -42,7 +42,7 @@ export function RoomInfoPanel({ room }: RoomInfoPanelProps) {
   return (
     <section
       aria-label="Room info"
-      className="shrink-0 rounded-card border border-border bg-surface-raised p-4"
+      className="min-w-0 shrink-0 rounded-card border border-border bg-surface-raised p-4"
     >
       <h2 className="mb-1.5 flex items-center gap-2 text-section">
         <Info size={16} strokeWidth={2.25} className="text-accent" aria-hidden="true" />

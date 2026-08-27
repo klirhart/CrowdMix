@@ -32,14 +32,14 @@ export function Input({
       <label
         htmlFor={inputId}
         className={cx(
-          'block text-sm font-medium text-white',
+          'block text-sm font-medium text-ink',
           hideLabel && 'sr-only',
         )}
       >
         {label}
       </label>
 
-      <div className="relative">
+      <div className="relative min-w-0">
         {icon ? (
           <span
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-subtle"
@@ -54,7 +54,7 @@ export function Input({
           aria-describedby={describedBy}
           aria-errormessage={errorId}
           className={cx(
-            'w-full rounded-xl border bg-surface-sunken py-2.5 text-sm text-white outline-none',
+            'min-w-0 w-full rounded-xl border bg-surface-sunken py-2.5 text-sm text-ink outline-none',
             'transition-colors duration-150 placeholder:text-subtle',
             'hover:border-border-strong focus:border-accent focus:bg-surface',
             'disabled:cursor-not-allowed disabled:opacity-50',

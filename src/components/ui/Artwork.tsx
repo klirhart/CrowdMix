@@ -22,7 +22,7 @@ export function Artwork({ src, alt = '', iconSize = 20, className = '' }: Artwor
       <div
         className={cx(
           base,
-          'flex items-center justify-center bg-gradient-to-br from-accent/30 to-accent-2/20 text-white/70',
+          'flex items-center justify-center bg-gradient-to-br from-accent/30 to-accent-2/20 text-ink/70',
           className,
         )}
         aria-hidden="true"

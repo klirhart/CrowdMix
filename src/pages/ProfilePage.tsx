@@ -314,7 +314,7 @@ export function ProfilePage() {
                   <StatIcon size={14} strokeWidth={2.25} aria-hidden="true" />
                   <p className="text-meta uppercase">{stat.label}</p>
                 </div>
-                <p className="mt-2.5 font-mono text-3xl font-bold tabular-nums text-white">
+                <p className="mt-2.5 font-mono text-3xl font-bold tabular-nums text-ink">
                   {activity[stat.key]}
                 </p>
               </div>
@@ -446,7 +446,7 @@ export function ProfilePage() {
             className={cx(
               'mt-4 flex items-center justify-center gap-2 rounded-card border border-dashed border-border',
               'bg-surface-raised/60 py-3.5 text-sm font-semibold text-muted',
-              'transition-all duration-150 hover:border-accent/50 hover:bg-surface-overlay hover:text-white',
+              'transition-all duration-150 hover:border-accent/50 hover:bg-surface-overlay hover:text-ink',
             )}
           >
             <SquarePlus size={16} strokeWidth={2.25} aria-hidden="true" />

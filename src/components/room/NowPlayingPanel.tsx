@@ -50,7 +50,7 @@ export function NowPlayingPanel({
   return (
     <section
       aria-label="Now playing"
-      className="relative shrink-0 overflow-hidden rounded-panel border border-border bg-surface-raised shadow-panel"
+      className="relative min-w-0 shrink-0 overflow-hidden rounded-panel border border-border bg-surface-raised shadow-panel"
     >
       {artworkUrl ? (
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -68,12 +68,12 @@ export function NowPlayingPanel({
         />
       )}
 
-      <div className="relative flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
+      <div className="relative flex min-w-0 items-center gap-2.5 p-3 sm:gap-4 sm:p-4">
         <div
           className={cx(
-            'relative isolate w-[9.75rem] shrink-0 overflow-hidden rounded-card border bg-black shadow-raised',
+            'relative isolate w-[min(7rem,38%)] shrink-0 overflow-hidden rounded-card border bg-black shadow-raised',
             song ? 'border-white/10' : 'border-dashed border-border',
-            'sm:w-48 lg:w-52',
+            'sm:w-40 md:w-48 xl:w-52',
           )}
         >
           <div className="relative aspect-video w-full">

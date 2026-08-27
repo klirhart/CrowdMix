@@ -17,7 +17,7 @@ import {
   validateUsername,
   validateWebsite,
 } from '@/lib/auth-validation'
-import { validateImageFile } from '@/lib/image'
+import { validateImageFile, PROFILE_IMAGE_MAX_MB } from '@/lib/image'
 import { deleteProfileMedia, uploadProfileMedia } from '@/lib/profile-media'
 import { getProfileSaveError, isUsernameAvailable, updateProfile } from '@/lib/profiles'
 import type { Profile } from '@/types/profile'
@@ -233,7 +233,7 @@ export function EditProfileModal({ open, profile, onClose, onSaved }: EditProfil
         {error ? <Alert variant="error">{error}</Alert> : null}
 
         <div className="space-y-2">
-          <p className="text-sm font-medium text-white">Cover photo</p>
+          <p className="text-sm font-medium text-ink">Cover photo</p>
           <div className="relative overflow-hidden rounded-xl border border-border bg-surface-sunken">
             <div className="relative h-28 sm:h-36">
               {previewCover ? (
@@ -283,12 +283,12 @@ export function EditProfileModal({ open, profile, onClose, onSaved }: EditProfil
               {fieldErrors.cover}
             </p>
           ) : (
-            <p className="text-xs text-muted">JPG, PNG, or WebP. Up to 8 MB.</p>
+            <p className="text-xs text-muted">JPG, PNG, or WebP. Up to {PROFILE_IMAGE_MAX_MB} MB.</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium text-white">Profile picture</p>
+          <p className="text-sm font-medium text-ink">Profile picture</p>
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
               <div className="rounded-full ring-4 ring-surface-raised">
@@ -341,7 +341,7 @@ export function EditProfileModal({ open, profile, onClose, onSaved }: EditProfil
                   {fieldErrors.avatar}
                 </p>
               ) : (
-                <p className="text-xs text-muted">JPG, PNG, or WebP. Up to 8 MB.</p>
+                <p className="text-xs text-muted">JPG, PNG, or WebP. Up to {PROFILE_IMAGE_MAX_MB} MB.</p>
               )}
             </div>
           </div>
@@ -395,7 +395,7 @@ export function EditProfileModal({ open, profile, onClose, onSaved }: EditProfil
         />
 
         <div className="space-y-2">
-          <label htmlFor="profile-bio" className="block text-sm font-medium text-white">
+          <label htmlFor="profile-bio" className="block text-sm font-medium text-ink">
             Bio
           </label>
           <textarea
@@ -412,7 +412,7 @@ export function EditProfileModal({ open, profile, onClose, onSaved }: EditProfil
             placeholder="A little about you and the music you like"
             className={cx(
               'w-full resize-y rounded-xl border bg-surface-sunken px-4 py-3',
-              'text-sm leading-relaxed text-white outline-none transition-colors duration-150',
+              'text-sm leading-relaxed text-ink outline-none transition-colors duration-150',
               'placeholder:text-subtle hover:border-border-strong',
               'focus:border-accent focus:bg-surface disabled:cursor-not-allowed disabled:opacity-50',
               fieldErrors.bio ? 'border-live/70' : 'border-border',

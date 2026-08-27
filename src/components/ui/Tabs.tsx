@@ -90,11 +90,11 @@ export function Tabs<T extends string>({
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(item.value)}
             className={cx(
-              'flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2.5 sm:px-3',
-              'whitespace-nowrap text-[13px] font-semibold transition-all duration-150 sm:text-sm',
+              'flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 py-2.5 sm:gap-2 sm:px-3',
+              'text-center text-[12px] font-semibold leading-tight transition-all duration-150 sm:whitespace-nowrap sm:text-sm',
               isActive
                 ? 'bg-accent text-white shadow-raised'
-                : 'text-muted hover:bg-surface-overlay hover:text-white',
+                : 'text-muted hover:bg-surface-overlay hover:text-ink',
             )}
           >
             {item.icon ? (

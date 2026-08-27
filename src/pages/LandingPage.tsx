@@ -67,7 +67,7 @@ export function LandingPage() {
               to="/join-room"
               className={cx(
                 'inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-raised px-6 py-3',
-                'text-sm font-semibold text-white transition-all duration-150',
+                'text-sm font-semibold text-ink transition-all duration-150',
                 'hover:border-border-strong hover:bg-surface-overlay active:scale-[0.98]',
               )}
             >
@@ -78,7 +78,7 @@ export function LandingPage() {
               to="/home"
               className={cx(
                 'inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-raised px-6 py-3',
-                'text-sm font-semibold text-white transition-all duration-150',
+                'text-sm font-semibold text-ink transition-all duration-150',
                 'hover:border-border-strong hover:bg-surface-overlay active:scale-[0.98]',
               )}
             >

@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { getAuthErrorMessage, validateEmail, validatePassword } from '@/lib/auth-validation'
+import {
+  getAuthErrorMessage,
+  safeInternalPath,
+  validateEmail,
+  validatePassword,
+} from '@/lib/auth-validation'
 import { getSupabaseClient } from '@/lib/supabase'
 
 export function LoginPage() {
@@ -60,13 +65,13 @@ export function LoginPage() {
         throw signInError
       }
 
-      const redirectTo =
+      const redirectTo = safeInternalPath(
         typeof location.state === 'object' &&
-        location.state !== null &&
-        'from' in location.state &&
-        typeof location.state.from === 'string'
+          location.state !== null &&
+          'from' in location.state
           ? location.state.from
-          : '/home'
+          : undefined,
+      )
 
       navigate(redirectTo, { replace: true })
     } catch (caughtError) {

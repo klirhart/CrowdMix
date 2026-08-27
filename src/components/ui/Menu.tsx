@@ -94,8 +94,8 @@ export function Menu({ label, trigger, items }: MenuProps) {
         className={cx(
           'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
           'text-subtle transition-colors duration-150',
-          'hover:bg-surface-overlay hover:text-white',
-          open && 'bg-surface-overlay text-white',
+          'hover:bg-surface-overlay hover:text-ink',
+          open && 'bg-surface-overlay text-ink',
         )}
       >
         {trigger}
@@ -133,7 +133,7 @@ export function Menu({ label, trigger, items }: MenuProps) {
                     'transition-colors duration-150',
                     item.tone === 'danger'
                       ? 'text-live hover:bg-live/15'
-                      : 'text-muted hover:bg-surface-overlay hover:text-white',
+                      : 'text-muted hover:bg-surface-overlay hover:text-ink',
                     'disabled:pointer-events-none disabled:opacity-40',
                   )}
                 >

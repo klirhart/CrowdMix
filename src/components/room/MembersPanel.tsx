@@ -45,7 +45,7 @@ export function MembersPanel({
     <section
       id="room-members"
       aria-label="Members"
-      className="flex shrink-0 flex-col overflow-hidden rounded-card border border-border bg-surface-raised p-3.5 lg:max-h-[40%]"
+      className="flex min-w-0 shrink-0 flex-col overflow-hidden rounded-card border border-border bg-surface-raised p-3.5 xl:max-h-[40%]"
     >
       <div className="mb-2 flex shrink-0 items-center justify-between px-1">
         <h2 className="flex items-center gap-2 text-section">

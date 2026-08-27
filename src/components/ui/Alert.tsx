@@ -11,9 +11,9 @@ interface AlertProps {
 }
 
 const variantClasses: Record<AlertVariant, string> = {
-  error: 'border-live/30 bg-live/10 text-red-100',
+  error: 'border-live/30 bg-live/10 text-ink',
   info: 'border-border bg-surface-raised text-muted',
-  success: 'border-online/30 bg-online/10 text-emerald-100',
+  success: 'border-online/30 bg-online/10 text-ink',
 }
 
 const variantIcons: Record<AlertVariant, typeof Info> = {

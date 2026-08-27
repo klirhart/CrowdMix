@@ -245,6 +245,10 @@ export function MusicRoomPage() {
       const title = suggestion.title.trim()
       const artist = suggestion.artist.trim()
 
+      if (!title || !artist) {
+        throw new Error('Enter a song title and artist.')
+      }
+
       if (!/^[a-zA-Z0-9_-]{11}$/.test(youtubeId)) {
         throw new Error('Enter a valid YouTube URL or 11-character video ID')
       }
@@ -546,8 +550,8 @@ export function MusicRoomPage() {
   return (
     <div
       className={cx(
-        'flex flex-col lg:h-dvh lg:overflow-hidden',
-        nowPlaying && 'max-lg:pb-[4.75rem]',
+        'room-page',
+        nowPlaying && 'max-lg:pb-[6.25rem]',
       )}
     >
       <RoomHeader
@@ -559,11 +563,11 @@ export function MusicRoomPage() {
         onCopyRoomLink={handleCopyRoomLink}
       />
 
-      <PageShell width="wide" className="flex min-h-0 flex-1 flex-col py-5">
-        <div className="grid min-h-0 flex-1 gap-5 lg:h-full lg:grid-cols-3 lg:grid-rows-1 lg:gap-6">
+      <PageShell width="wide" className="room-page-shell flex min-w-0 flex-col py-5">
+        <div className="room-page-grid grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-3 xl:grid-rows-1 xl:gap-6">
           {/* Main Content */}
-          <div className="flex min-h-0 flex-col gap-5 overflow-hidden lg:col-span-2 lg:h-full">
-            <div className={showSuggestForm ? 'min-h-0 max-h-40 shrink-0 overflow-hidden' : 'shrink-0'}>
+          <div className="room-page-main flex min-w-0 flex-col gap-5 xl:col-span-2">
+            <div className="shrink-0">
               <NowPlayingPanel
                 nowPlaying={nowPlaying}
                 canControlPlayback={canControlPlayback}
@@ -588,11 +592,11 @@ export function MusicRoomPage() {
             </div>
 
             {/* Queue */}
-            <section id="room-queue" aria-label="Queue" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="mb-3 flex shrink-0 items-center justify-between gap-4">
-                <h2 className="flex items-center gap-2.5 text-title">
-                  <ListMusic size={19} strokeWidth={2.25} className="text-accent" aria-hidden="true" />
-                  Up Next
+            <section id="room-queue" aria-label="Queue" className="room-page-queue flex min-w-0 flex-col">
+              <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
+                <h2 className="flex min-w-0 items-center gap-2.5 text-title">
+                  <ListMusic size={19} strokeWidth={2.25} className="shrink-0 text-accent" aria-hidden="true" />
+                  <span className="truncate">Up Next</span>
                   {pendingCount > 0 ? (
                     <span className="font-mono text-sm font-normal text-subtle">
                       {pendingCount}
@@ -603,6 +607,7 @@ export function MusicRoomPage() {
                   <Button
                     onClick={() => setShowSuggestForm((visible) => !visible)}
                     size="sm"
+                    className="shrink-0"
                   >
                     <Plus size={15} strokeWidth={2.75} aria-hidden="true" />
                     Suggest Song
@@ -613,7 +618,7 @@ export function MusicRoomPage() {
               {actionError && <Alert variant="error" className="mb-3 shrink-0">{actionError}</Alert>}
 
               {showSuggestForm ? (
-                <div className="min-h-0 flex-1 overflow-hidden">
+                <div className="room-page-queue-list">
                   <SuggestSongForm
                     suggestion={suggestion}
                     onSuggestionChange={setSuggestion}
@@ -629,7 +634,7 @@ export function MusicRoomPage() {
                   />
                 </div>
               ) : (
-                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+                <div className="room-page-queue-list flex flex-col">
                   <div className="space-y-2.5">
                     {queue.map((item) => (
                       <QueueItemCard
@@ -683,7 +688,7 @@ export function MusicRoomPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain lg:h-full">
+          <div className="room-page-side flex min-w-0 flex-col gap-4">
             <MembersPanel
               members={members}
               room={room}

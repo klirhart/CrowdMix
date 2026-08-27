@@ -29,7 +29,7 @@ export function ShareRoomPanel({
       </div>
 
       <p className="mt-4 text-meta uppercase text-subtle">Room code</p>
-      <p className="mt-1 font-mono text-2xl font-bold uppercase tracking-[0.2em] text-white">
+      <p className="mt-1 font-mono text-2xl font-bold uppercase tracking-[0.2em] text-ink">
         {roomCode}
       </p>
 

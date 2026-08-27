@@ -88,7 +88,7 @@ export function SuggestSongForm({
                   className="h-11 w-[74px] shrink-0 rounded-lg object-cover"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-white">
+                  <span className="block truncate text-sm font-semibold text-ink">
                     {result.title}
                   </span>
                   <span className="block truncate text-xs text-subtle">

@@ -66,7 +66,7 @@ export function Modal({ open, title, onClose, children, size = 'sm' }: ModalProp
             ? 'flex max-h-[min(46rem,calc(100dvh-2.5rem))] max-w-xl flex-col sm:max-w-2xl'
             : size === 'lg'
               ? 'flex max-h-[min(40rem,calc(100dvh-3rem))] max-w-lg flex-col'
-              : 'max-w-sm',
+              : 'flex max-h-[calc(100dvh-2rem)] max-w-sm flex-col overflow-y-auto overscroll-contain',
         )}
       >
         <div className="mb-4 flex shrink-0 items-start justify-between gap-3">

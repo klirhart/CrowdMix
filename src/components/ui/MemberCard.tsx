@@ -54,7 +54,7 @@ export function MemberCard({
           <span
             className={cx(
               'truncate text-sm font-semibold',
-              isOnline ? 'text-white' : 'text-muted',
+              isOnline ? 'text-ink' : 'text-muted',
             )}
           >
             {name}
@@ -80,7 +80,7 @@ export function MemberCard({
   )
 
   const shell = cx(
-    'flex items-center gap-3 rounded-xl px-2.5 py-2 transition-colors duration-150',
+    'flex min-w-0 w-full items-center gap-3 rounded-xl px-2.5 py-2 transition-colors duration-150',
     isOnline ? 'hover:bg-surface-overlay' : 'opacity-60 hover:opacity-100',
   )
 

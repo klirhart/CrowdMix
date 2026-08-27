@@ -39,7 +39,7 @@ export function RecentlyPlayedPanel({
   return (
     <section
       aria-label="Recently played"
-      className="recently-played-panel flex h-64 max-h-64 min-h-64 flex-col overflow-hidden rounded-card border border-border bg-surface-raised p-4 sm:h-80 sm:max-h-80 sm:min-h-80 lg:h-auto lg:max-h-none lg:min-h-48"
+      className="recently-played-panel flex h-64 max-h-64 min-h-64 min-w-0 w-full flex-col overflow-hidden rounded-card border border-border bg-surface-raised p-4 sm:h-80 sm:max-h-80 sm:min-h-80 xl:h-auto xl:max-h-none xl:min-h-48"
     >
       <h2 className="mb-1 flex shrink-0 items-center gap-2 text-section">
         <Clock size={16} strokeWidth={2.25} className="text-accent" aria-hidden="true" />
@@ -74,7 +74,7 @@ export function RecentlyPlayedPanel({
                       className="h-10 w-10 rounded-lg"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-white">{title}</p>
+                      <p className="truncate text-sm font-medium text-ink">{title}</p>
                       <p className="truncate text-xs text-subtle">{artist}</p>
                     </div>
                   </button>
@@ -104,7 +104,7 @@ export function RecentlyPlayedPanel({
                 className="h-14 w-14 rounded-xl"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{selectedSong.title}</p>
+                <p className="truncate text-sm font-semibold text-ink">{selectedSong.title}</p>
                 <p className="truncate text-sm text-muted">{selectedSong.artist}</p>
               </div>
             </div>

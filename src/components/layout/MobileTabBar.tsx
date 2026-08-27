@@ -17,9 +17,9 @@ export function MobileTabBar() {
 
   return (
     <nav
-      aria-label="Main"
+      aria-label="Mobile"
       className={cx(
-        'fixed inset-x-0 bottom-0 z-40 border-t border-border',
+        'fixed inset-x-0 bottom-0 z-40 w-full min-w-0 border-t border-border',
         'bg-surface/95 backdrop-blur-lg lg:hidden',
         'pb-[env(safe-area-inset-bottom)]',
       )}
@@ -35,9 +35,9 @@ export function MobileTabBar() {
               to={item.to}
               aria-current={active ? 'page' : undefined}
               className={cx(
-                'relative flex flex-1 flex-col items-center gap-1 px-1 pb-2 pt-2.5',
+                'relative flex min-w-0 flex-1 flex-col items-center gap-1 px-1 pb-2 pt-2.5',
                 'text-[11px] font-semibold transition-colors duration-150',
-                active ? 'text-accent' : 'text-subtle hover:text-white',
+                active ? 'text-accent' : 'text-subtle hover:text-ink',
               )}
             >
               <span
@@ -48,7 +48,7 @@ export function MobileTabBar() {
                 aria-hidden="true"
               />
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-              <span>{item.shortLabel}</span>
+              <span className="max-w-full truncate">{item.shortLabel}</span>
             </Link>
           )
         })}

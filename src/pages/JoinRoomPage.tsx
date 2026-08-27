@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
   Camera,
@@ -65,6 +65,14 @@ function isAlreadyMemberError(error: unknown): boolean {
 
 type JoinTab = 'code' | 'search' | 'qr'
 
+function parseJoinTab(value: string | null): JoinTab | null {
+  if (value === 'code' || value === 'search' || value === 'qr') {
+    return value
+  }
+
+  return null
+}
+
 const tabItems: ReadonlyArray<TabItem<JoinTab>> = [
   { value: 'code', label: 'Room Code', icon: <KeyRound size={15} strokeWidth={2.25} /> },
   { value: 'search', label: 'Search', icon: <Search size={15} strokeWidth={2.25} /> },
@@ -73,11 +81,15 @@ const tabItems: ReadonlyArray<TabItem<JoinTab>> = [
 
 export function JoinRoomPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user, isConfigured } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [roomCode, setRoomCode] = useState('')
-  const [activeTab, setActiveTab] = useState<'code' | 'search' | 'qr'>('code')
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [roomCode, setRoomCode] = useState(
+    () => new URLSearchParams(window.location.search).get('room')?.trim().toUpperCase() ?? '',
+  )
+  const activeTab = parseJoinTab(searchParams.get('tab')) ?? 'code'
   const [searchQuery, setSearchQuery] = useState('')
   const [roomResults, setRoomResults] = useState<Room[]>([])
   const [profileResults, setProfileResults] = useState<Profile[]>([])
@@ -89,34 +101,51 @@ export function JoinRoomPage() {
   usePageTitle('Join a room')
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const sharedCode = params.get('room')?.trim().toUpperCase()
+    const sharedCode = searchParams.get('room')?.trim().toUpperCase()
     if (sharedCode) {
       setRoomCode(sharedCode)
     }
-  }, [])
+  }, [searchParams])
+
+  const handleTabChange = (next: JoinTab) => {
+    setError(null)
+    setSearchError(null)
+    const nextParams = new URLSearchParams(searchParams)
+    if (next === 'code') {
+      nextParams.delete('tab')
+    } else {
+      nextParams.set('tab', next)
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
 
   useEffect(() => {
-    if (activeTab !== 'search' || !searchQuery.trim()) {
+    const term = searchQuery.trim()
+
+    if (activeTab !== 'search' || !term) {
       setRoomResults([])
       setProfileResults([])
+      setSearching(false)
       return
     }
 
     let active = true
     const timer = window.setTimeout(async () => {
       setSearching(true)
+      setSearchError(null)
       try {
         const [rooms, profiles] = await Promise.all([
-          searchPublicRooms(searchQuery),
-          searchProfiles(searchQuery),
+          searchPublicRooms(term),
+          searchProfiles(term),
         ])
         if (active) {
           setRoomResults(rooms)
           setProfileResults(profiles)
         }
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : 'Search failed')
+        if (active) {
+          setSearchError(err instanceof Error ? err.message : 'Search failed')
+        }
       } finally {
         if (active) setSearching(false)
       }
@@ -263,10 +292,7 @@ export function JoinRoomPage() {
       <Tabs
         items={tabItems}
         value={activeTab}
-        onChange={(next) => {
-          setActiveTab(next)
-          setError(null)
-        }}
+        onChange={handleTabChange}
         idBase="join"
         label="How to join a room"
         className="mt-8"
@@ -306,7 +332,7 @@ export function JoinRoomPage() {
               hideLabel
               className={cx(
                 'text-center font-mono text-2xl font-bold uppercase',
-                'tracking-[0.35em] placeholder:tracking-[0.35em] sm:text-3xl',
+                'tracking-[0.15em] placeholder:tracking-[0.15em] sm:tracking-[0.35em] sm:placeholder:tracking-[0.35em] sm:text-3xl',
               )}
             />
 
@@ -341,11 +367,15 @@ export function JoinRoomPage() {
             hint="Search public rooms or user profiles."
           />
 
+          {searchError ? (
+            <Alert variant="error">{searchError}</Alert>
+          ) : null}
+
           {searching ? <LoadingSpinner label="Searching..." inline className="px-1" /> : null}
 
           {noResults ? (
             <div className="rounded-card border border-dashed border-border bg-surface-raised/60 p-8 text-center">
-              <p className="text-sm text-muted">No rooms or users match “{searchQuery}”.</p>
+              <p className="text-sm text-muted">No rooms or users match “{searchQuery.trim()}”.</p>
             </div>
           ) : null}
 
@@ -374,7 +404,7 @@ export function JoinRoomPage() {
                       <Music size={17} strokeWidth={2} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-white">
+                      <span className="block truncate font-semibold text-ink">
                         {room.name}
                       </span>
                       <span className="block font-mono text-xs uppercase tracking-wider text-subtle">
@@ -418,7 +448,7 @@ export function JoinRoomPage() {
                       identityKey={profile.id}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-white">
+                      <span className="block truncate font-semibold text-ink">
                         {profile.display_name}
                       </span>
                       <span className="block truncate text-xs text-subtle">
@@ -471,7 +501,7 @@ export function JoinRoomPage() {
                 >
                   <ScanLine size={24} strokeWidth={2} />
                 </span>
-                <p className="text-section text-white">Scan a room QR code</p>
+                <p className="text-section text-ink">Scan a room QR code</p>
                 <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted">
                   Point your camera at the QR code shown in a room to join instantly.
                 </p>

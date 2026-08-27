@@ -1,4 +1,5 @@
-export const PROFILE_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+export const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+export const PROFILE_IMAGE_MAX_MB = PROFILE_IMAGE_MAX_BYTES / (1024 * 1024)
 export const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 
 const typeSet = new Set<string>(PROFILE_IMAGE_TYPES)
@@ -23,7 +24,7 @@ export function validateImageFile(file: File): void {
   }
 
   if (file.size > PROFILE_IMAGE_MAX_BYTES) {
-    throw new ImageValidationError('Keep images under 8 MB.')
+    throw new ImageValidationError(`Keep images under ${PROFILE_IMAGE_MAX_MB} MB.`)
   }
 }
 

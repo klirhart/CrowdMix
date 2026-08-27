@@ -164,3 +164,16 @@ export function getAuthErrorMessage(error: unknown): string {
 
   return message || 'Something went wrong. Please try again.'
 }
+
+/** Only allow in-app paths after login so `from` cannot bounce users off-site. */
+export function safeInternalPath(value: unknown, fallback = '/home'): string {
+  if (typeof value !== 'string') {
+    return fallback
+  }
+
+  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return fallback
+  }
+
+  return value
+}

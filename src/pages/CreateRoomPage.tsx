@@ -144,14 +144,14 @@ export function CreateRoomPage() {
           hint={
             <span className="flex justify-between gap-4">
               <span>What should we call your room?</span>
-              <span className="font-mono tabular-nums">{formData.name.length}/50</span>
+              <span className="font-mono tabular-nums">{formData.name.trim().length}/50</span>
             </span>
           }
         />
 
         {/* Description */}
         <div className="space-y-2">
-          <label htmlFor="description" className="block text-sm font-medium text-white">
+          <label htmlFor="description" className="block text-sm font-medium text-ink">
             Description
           </label>
           <textarea
@@ -165,7 +165,7 @@ export function CreateRoomPage() {
             rows={4}
             className={cx(
               'w-full resize-y rounded-xl border border-border bg-surface-sunken px-4 py-3',
-              'text-sm leading-relaxed text-white outline-none transition-colors duration-150',
+              'text-sm leading-relaxed text-ink outline-none transition-colors duration-150',
               'placeholder:text-subtle hover:border-border-strong',
               'focus:border-accent focus:bg-surface disabled:cursor-not-allowed disabled:opacity-50',
             )}
@@ -178,7 +178,7 @@ export function CreateRoomPage() {
 
         {/* Visibility */}
         <fieldset>
-          <legend className="mb-3 block text-sm font-medium text-white">
+          <legend className="mb-3 block text-sm font-medium text-ink">
             Room visibility
           </legend>
           <div className="space-y-2.5">
@@ -217,7 +217,7 @@ export function CreateRoomPage() {
                     <OptionIcon size={17} strokeWidth={2.25} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold text-white">{option.label}</span>
+                    <span className="block font-semibold text-ink">{option.label}</span>
                     <span className="mt-0.5 block text-sm leading-relaxed text-muted">
                       {option.description}
                     </span>

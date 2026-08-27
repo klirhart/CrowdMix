@@ -17,7 +17,7 @@ export function BrandMark({ iconOnly = false, size = 'md', className = '' }: Bra
   return (
     <Link
       to={user ? '/home' : '/login'}
-      className={cx('group flex items-center gap-2.5', className)}
+      className={cx('group flex min-w-0 items-center gap-2.5', className)}
       aria-label="CrowdMix home"
     >
       <img
@@ -34,8 +34,8 @@ export function BrandMark({ iconOnly = false, size = 'md', className = '' }: Bra
       {iconOnly ? null : (
         <span
           className={cx(
-            'font-extrabold tracking-tight',
-            size === 'sm' ? 'text-base' : 'text-lg',
+            'truncate font-extrabold tracking-tight',
+            size === 'sm' ? 'hidden text-base min-[24rem]:inline' : 'hidden text-lg min-[28rem]:inline',
           )}
         >
           CrowdMix

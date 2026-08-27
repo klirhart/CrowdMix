@@ -42,7 +42,7 @@ export function ProfileRoomHistoryCard({
           <Music size={18} strokeWidth={2} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-section text-white">{membership.name}</h3>
+          <h3 className="truncate text-section text-ink">{membership.name}</h3>
           <p className="mt-0.5 text-xs text-subtle">
             {membership.role === 'creator' ? 'Creator' : 'Member'}
             <span aria-hidden="true"> · </span>
@@ -82,8 +82,8 @@ export function ProfileRoomHistoryCard({
             to={`/r/${membership.room_code}`}
             className={cx(
               'inline-flex items-center gap-1.5 rounded-lg bg-surface-overlay px-3 py-1.5',
-              'text-xs font-semibold text-white transition-all duration-150',
-              'hover:bg-accent active:scale-[0.98]',
+              'text-xs font-semibold text-ink transition-all duration-150',
+              'hover:bg-accent hover:text-white active:scale-[0.98]',
             )}
           >
             {membership.is_active ? 'Open Room' : 'Rejoin'}

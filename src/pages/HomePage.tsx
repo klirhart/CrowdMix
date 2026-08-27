@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Compass, Music, Radio, Search, SquarePlus } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
-import { Avatar } from '@/components/ui/Avatar'
 import { SectionHeading } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RoomCard } from '@/components/ui/RoomCard'
@@ -34,7 +33,7 @@ const quickActions = [
     primary: false,
   },
   {
-    to: '/join-room',
+    to: '/join-room?tab=search',
     label: 'Search Rooms',
     description: 'Find rooms and people',
     icon: Search,
@@ -44,7 +43,7 @@ const quickActions = [
 
 function QuickActions() {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {quickActions.map((action) => {
         const Icon = action.icon
 
@@ -72,7 +71,7 @@ function QuickActions() {
               <Icon size={18} strokeWidth={2.25} />
             </span>
             <span className="min-w-0">
-              <span className="block truncate font-semibold text-white">{action.label}</span>
+              <span className="block truncate font-semibold text-ink">{action.label}</span>
               <span className="block truncate text-xs text-subtle">{action.description}</span>
             </span>
           </Link>
@@ -139,7 +138,7 @@ export function HomePage() {
     return (
       <PageShell>
         <div className="h-10 w-72 max-w-full animate-pulse rounded-lg bg-surface-overlay/70" />
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {[0, 1, 2].map((key) => (
             <div
               key={key}
@@ -162,25 +161,6 @@ export function HomePage() {
         eyebrow="Your dashboard"
         title={profile ? `Welcome back, ${profile.display_name}` : 'Home'}
         description="Create rooms, discover music, and join the crowd."
-        action={
-          profile ? (
-            <Link
-              to={`/u/${profile.username}`}
-              className={cx(
-                'inline-flex items-center gap-2.5 rounded-xl border border-border bg-surface-raised px-3 py-2',
-                'transition-all duration-150 hover:border-border-strong hover:bg-surface-overlay',
-              )}
-            >
-              <Avatar
-                displayName={profile.display_name}
-                avatarUrl={profile.avatar_url}
-                size="sm"
-                identityKey={profile.id}
-              />
-              <span className="text-sm font-semibold">@{profile.username}</span>
-            </Link>
-          ) : null
-        }
       />
 
       <div className="mt-8">

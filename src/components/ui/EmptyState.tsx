@@ -19,7 +19,7 @@ export function EmptyState({
   return (
     <div
       className={cx(
-        'flex flex-col items-center rounded-card border border-dashed border-border bg-surface-raised/60 px-6 py-12 text-center',
+        'flex w-full min-w-0 flex-col items-center rounded-card border border-dashed border-border bg-surface-raised/60 px-6 py-12 text-center',
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function EmptyState({
       >
         {icon}
       </span>
-      <h3 className="text-section text-white">{title}</h3>
+      <h3 className="text-section text-ink">{title}</h3>
       {description ? (
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{description}</p>
       ) : null}

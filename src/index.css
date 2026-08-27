@@ -1,30 +1,79 @@
 @import 'tailwindcss';
 
+:root {
+  color-scheme: dark;
+  --cm-ink: #ffffff;
+  --cm-surface: #0a0a0e;
+  --cm-surface-sunken: #06060a;
+  --cm-surface-raised: #14141b;
+  --cm-surface-overlay: #1e1e28;
+  --cm-surface-hover: #26263280;
+  --cm-border: #26263a;
+  --cm-border-strong: #3a3a52;
+  --cm-muted: #9494a8;
+  --cm-subtle: #6b6b80;
+  --cm-accent: #a855f7;
+  --cm-accent-hover: #9333ea;
+  --cm-accent-soft: #a855f71f;
+  --cm-accent-2: #f0559a;
+  --cm-online: #34d399;
+  --cm-live: #fb5c6b;
+  --cm-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --cm-shadow-raised: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --cm-shadow-panel: 0 24px 60px -24px rgb(0 0 0 / 0.8);
+  --cm-shadow-glow: 0 0 0 1px var(--cm-accent-soft), 0 12px 40px -12px rgb(168 85 247 / 0.35);
+}
+
+html.light {
+  color-scheme: light;
+  --cm-ink: #12121a;
+  --cm-surface: #f4f4f8;
+  --cm-surface-sunken: #ececf3;
+  --cm-surface-raised: #ffffff;
+  --cm-surface-overlay: #e8e8f0;
+  --cm-surface-hover: #dcdce680;
+  --cm-border: #e2e2ea;
+  --cm-border-strong: #c8c8d6;
+  --cm-muted: #5c5c72;
+  --cm-subtle: #8a8a9c;
+  --cm-accent: #9333ea;
+  --cm-accent-hover: #7e22ce;
+  --cm-accent-soft: #9333ea1f;
+  --cm-accent-2: #db2777;
+  --cm-online: #059669;
+  --cm-live: #e11d48;
+  --cm-shadow-card: 0 1px 2px rgb(18 18 26 / 0.06);
+  --cm-shadow-raised: 0 8px 24px -8px rgb(18 18 26 / 0.12);
+  --cm-shadow-panel: 0 24px 60px -24px rgb(18 18 26 / 0.16);
+  --cm-shadow-glow: 0 0 0 1px var(--cm-accent-soft), 0 12px 40px -12px rgb(147 51 234 / 0.22);
+}
+
 @theme {
-  --color-surface: #0a0a0e;
-  --color-surface-sunken: #06060a;
-  --color-surface-raised: #14141b;
-  --color-surface-overlay: #1e1e28;
-  --color-surface-hover: #26263280;
-  --color-border: #26263a;
-  --color-border-strong: #3a3a52;
-  --color-muted: #9494a8;
-  --color-subtle: #6b6b80;
-  --color-accent: #a855f7;
-  --color-accent-hover: #9333ea;
-  --color-accent-soft: #a855f71f;
-  --color-accent-2: #f0559a;
-  --color-online: #34d399;
-  --color-live: #fb5c6b;
+  --color-ink: var(--cm-ink);
+  --color-surface: var(--cm-surface);
+  --color-surface-sunken: var(--cm-surface-sunken);
+  --color-surface-raised: var(--cm-surface-raised);
+  --color-surface-overlay: var(--cm-surface-overlay);
+  --color-surface-hover: var(--cm-surface-hover);
+  --color-border: var(--cm-border);
+  --color-border-strong: var(--cm-border-strong);
+  --color-muted: var(--cm-muted);
+  --color-subtle: var(--cm-subtle);
+  --color-accent: var(--cm-accent);
+  --color-accent-hover: var(--cm-accent-hover);
+  --color-accent-soft: var(--cm-accent-soft);
+  --color-accent-2: var(--cm-accent-2);
+  --color-online: var(--cm-online);
+  --color-live: var(--cm-live);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
   --radius-card: 1rem;
   --radius-panel: 1.25rem;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-raised: 0 8px 24px -8px rgb(0 0 0 / 0.6);
-  --shadow-panel: 0 24px 60px -24px rgb(0 0 0 / 0.8);
-  --shadow-glow: 0 0 0 1px var(--color-accent-soft), 0 12px 40px -12px rgb(168 85 247 / 0.35);
+  --shadow-card: var(--cm-shadow-card);
+  --shadow-raised: var(--cm-shadow-raised);
+  --shadow-panel: var(--cm-shadow-panel);
+  --shadow-glow: var(--cm-shadow-glow);
 
   --text-display: 2.25rem;
   --text-display--line-height: 1.1;
@@ -50,10 +99,18 @@
 @layer base {
   html {
     @apply antialiased;
+    overflow-x: clip;
+    width: 100%;
+    max-width: 100%;
   }
 
   body {
-    @apply min-h-screen bg-surface text-white font-sans;
+    @apply bg-surface text-ink font-sans;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   button,
@@ -66,7 +123,12 @@
   }
 
   #root {
-    @apply min-h-screen;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
   }
 
   ::selection {
@@ -75,12 +137,17 @@
   }
 }
 
+@utility min-h-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 @utility gradient-brand {
   background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
 }
 
 @utility text-gradient-brand {
-  background-image: linear-gradient(135deg, #ffffff 20%, var(--color-accent) 90%);
+  background-image: linear-gradient(135deg, var(--cm-ink) 20%, var(--cm-accent) 90%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -148,6 +215,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .room-chat-resize {
@@ -204,7 +273,7 @@
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: white;
+  background: var(--cm-ink);
 }
 
 .room-player-volume::-moz-range-thumb {
@@ -212,7 +281,7 @@
   height: 10px;
   border: 0;
   border-radius: 999px;
-  background: white;
+  background: var(--cm-ink);
 }
 
 /* YouTube sets inline width/height on the iframe. Beat those so the
@@ -242,12 +311,78 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .recently-played-panel {
     height: auto;
     min-height: 12rem;
     max-height: none;
     flex: 1 1 12rem;
+  }
+}
+
+/* Room dashboard fill only when there is enough width AND height.
+   Windowed / short viewports fall back to document scroll so controls
+   are never clipped by overflow:hidden. */
+.room-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.room-page-shell,
+.room-page-grid,
+.room-page-main,
+.room-page-queue,
+.room-page-queue-list,
+.room-page-side {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 1280px) and (min-height: 840px) {
+  .room-page {
+    height: 100dvh;
+    overflow-x: clip;
+    overflow-y: auto;
+  }
+
+  .room-page-shell {
+    display: flex;
+    flex: 1 1 0%;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .room-page-grid {
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+
+  .room-page-main {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .room-page-queue {
+    min-height: 0;
+    flex: 1 1 0%;
+    overflow: hidden;
+  }
+
+  .room-page-queue-list {
+    min-height: 0;
+    flex: 1 1 0%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .room-page-side {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 

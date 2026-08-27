@@ -68,7 +68,7 @@ function SidebarRoomRow({
       <span
         className={cx(
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-          active ? 'bg-accent/30 text-white' : 'bg-surface-overlay text-subtle',
+          active ? 'bg-accent/30 text-ink' : 'bg-surface-overlay text-subtle',
         )}
         aria-hidden="true"
       >
@@ -76,7 +76,7 @@ function SidebarRoomRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-semibold text-white">{membership.name}</span>
+          <span className="truncate text-sm font-semibold text-ink">{membership.name}</span>
           {pinned ? <Pin size={11} strokeWidth={2.5} className="shrink-0 text-accent" aria-hidden="true" /> : null}
         </span>
         <span className="mt-0.5 block truncate text-[11px] text-subtle">

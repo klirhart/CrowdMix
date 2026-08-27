@@ -63,7 +63,7 @@ export function LyricsPanel({ song, onClose }: LyricsPanelProps) {
             className="h-14 w-14 rounded-xl"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">{song.title}</p>
+            <p className="truncate text-sm font-semibold text-ink">{song.title}</p>
             <p className="truncate text-sm text-muted">{song.artist}</p>
           </div>
         </div>

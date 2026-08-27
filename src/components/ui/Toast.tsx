@@ -29,8 +29,8 @@ export function Toast({ message, tone = 'success', onDismiss }: ToastProps) {
         'flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-panel',
         'lg:bottom-28',
         tone === 'error'
-          ? 'border-live/30 bg-live/15 text-red-100'
-          : 'border-online/30 bg-surface-raised text-emerald-100',
+          ? 'border-live/30 bg-live/15 text-ink'
+          : 'border-online/30 bg-surface-raised text-ink',
       )}
     >
       {tone === 'error' ? (

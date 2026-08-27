@@ -40,7 +40,7 @@ export function RoomCard({ room, actionLabel = 'Join' }: RoomCardProps) {
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="truncate text-section text-white">{room.name}</h3>
+            <h3 className="truncate text-section text-ink">{room.name}</h3>
             {room.is_active ? (
               <Badge tone="live" pulse>
                 LIVE
@@ -72,8 +72,8 @@ export function RoomCard({ room, actionLabel = 'Join' }: RoomCardProps) {
           aria-label={`${actionLabel} ${room.name} (${room.room_code})`}
           className={cx(
             'inline-flex items-center gap-1.5 rounded-xl bg-surface-overlay px-3.5 py-2',
-            'text-sm font-semibold text-white transition-all duration-150',
-            'group-hover:bg-accent group-hover:shadow-raised hover:bg-accent active:scale-[0.98]',
+            'text-sm font-semibold text-ink transition-all duration-150',
+            'group-hover:bg-accent group-hover:text-white group-hover:shadow-raised hover:bg-accent hover:text-white active:scale-[0.98]',
           )}
         >
           {actionLabel}

@@ -5,7 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 export function NotFoundPage() {
   usePageTitle('Not found')
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
+    <div className="mx-auto flex min-h-app max-w-lg flex-col items-center justify-center px-5 py-20 text-center">
       <span
         className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-soft text-accent"
         aria-hidden="true"

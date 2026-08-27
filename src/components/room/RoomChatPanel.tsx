@@ -17,16 +17,26 @@ interface RoomChatPanelProps {
 }
 
 const CHAT_HEIGHT_KEY = 'crowdmix.room-chat-height'
-const MIN_CHAT_HEIGHT = 160
+const ABSOLUTE_MIN_CHAT_HEIGHT = 120
+const COMFORTABLE_MIN_CHAT_HEIGHT = 160
 const DEFAULT_CHAT_HEIGHT = 192
+const SHORT_VIEWPORT_HEIGHT = 800
+
+function minChatHeight(): number {
+  if (typeof window === 'undefined') return COMFORTABLE_MIN_CHAT_HEIGHT
+  return window.innerHeight < SHORT_VIEWPORT_HEIGHT
+    ? ABSOLUTE_MIN_CHAT_HEIGHT
+    : COMFORTABLE_MIN_CHAT_HEIGHT
+}
 
 function maxChatHeight(): number {
   if (typeof window === 'undefined') return 480
-  return Math.max(MIN_CHAT_HEIGHT, Math.round(window.innerHeight * 0.5))
+  const ratio = window.innerHeight < SHORT_VIEWPORT_HEIGHT ? 0.32 : 0.5
+  return Math.max(minChatHeight(), Math.round(window.innerHeight * ratio))
 }
 
 function clampChatHeight(value: number): number {
-  return Math.min(maxChatHeight(), Math.max(MIN_CHAT_HEIGHT, Math.round(value)))
+  return Math.min(maxChatHeight(), Math.max(minChatHeight(), Math.round(value)))
 }
 
 function readChatHeight(): number {
@@ -206,7 +216,7 @@ export function RoomChatPanel({
     }
     if (event.key === 'End') {
       event.preventDefault()
-      applyHeight(MIN_CHAT_HEIGHT)
+      applyHeight(minChatHeight())
     }
   }
 
@@ -241,14 +251,14 @@ export function RoomChatPanel({
   return (
     <section
       aria-label="Room chat"
-      className="room-chat-panel relative shrink-0 rounded-card border border-border bg-surface-raised"
-      style={{ height }}
+      className="room-chat-panel relative min-w-0 w-full max-w-full shrink-0 rounded-card border border-border bg-surface-raised"
+      style={{ height, maxHeight: 'min(50dvh, 24rem)' }}
     >
       <div
         role="separator"
         aria-orientation="horizontal"
         aria-label="Resize room chat"
-        aria-valuemin={MIN_CHAT_HEIGHT}
+        aria-valuemin={ABSOLUTE_MIN_CHAT_HEIGHT}
         aria-valuemax={maxChatHeight()}
         aria-valuenow={height}
         aria-valuetext={`${height} pixels tall`}
@@ -297,7 +307,7 @@ export function RoomChatPanel({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className={cx('font-semibold', isYou ? 'text-accent' : 'text-white')}>
+                      <span className={cx('font-semibold', isYou ? 'text-accent' : 'text-ink')}>
                         {isYou ? 'You' : name}
                       </span>
                       {creator ? (
@@ -320,7 +330,7 @@ export function RoomChatPanel({
 
       <form
         onSubmit={(event) => void handleSubmit(event)}
-        className="flex shrink-0 items-end gap-2 border-t border-border p-3"
+        className="flex min-w-0 shrink-0 items-end gap-2 border-t border-border p-3"
       >
         <Input
           id="room-chat-message"
@@ -335,7 +345,7 @@ export function RoomChatPanel({
           autoComplete="off"
           disabled={sending}
         />
-        <Button type="submit" size="sm" disabled={sending || !draft.trim()}>
+        <Button type="submit" size="sm" disabled={sending || !draft.trim()} className="shrink-0">
           <Send size={14} strokeWidth={2.5} aria-hidden="true" />
           Send
         </Button>

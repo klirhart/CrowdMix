@@ -38,9 +38,9 @@ export function UserMenu({ variant = 'sidebar' }: UserMenuProps) {
     setLoading(true)
 
     try {
-      navigate('/', { replace: true })
       await signOut()
       setConfirmOpen(false)
+      navigate('/login', { replace: true })
     } catch (caughtError) {
       setError(getAuthErrorMessage(caughtError))
     } finally {
@@ -78,7 +78,7 @@ export function UserMenu({ variant = 'sidebar' }: UserMenuProps) {
 
   if (variant === 'compact') {
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         <Link
           to={`/u/${profile.username}`}
           className="rounded-full transition-transform duration-150 hover:scale-105"
@@ -115,7 +115,7 @@ export function UserMenu({ variant = 'sidebar' }: UserMenuProps) {
           identityKey={profile.id}
         />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-white">
+          <span className="block truncate text-sm font-semibold text-ink">
             {profile.display_name}
           </span>
           <span className="block truncate text-xs text-subtle">@{profile.username}</span>

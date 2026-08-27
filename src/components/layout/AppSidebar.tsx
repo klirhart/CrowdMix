@@ -8,6 +8,7 @@ import {
   type NavItem,
 } from '@/components/layout/nav-items'
 import { UserMenu } from '@/components/auth/UserMenu'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cx } from '@/components/ui/cx'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -30,8 +31,8 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
         'group relative flex items-center gap-3 rounded-xl px-3 py-2.5',
         'text-sm font-semibold transition-all duration-150',
         active
-          ? 'bg-accent-soft text-white'
-          : 'text-muted hover:bg-surface-overlay hover:text-white',
+          ? 'bg-accent-soft text-ink'
+          : 'text-muted hover:bg-surface-overlay hover:text-ink',
       )}
     >
       <span
@@ -46,7 +47,7 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
         strokeWidth={2.25}
         className={cx(
           'shrink-0 transition-colors',
-          active ? 'text-accent' : 'text-subtle group-hover:text-white',
+          active ? 'text-accent' : 'text-subtle group-hover:text-ink',
         )}
         aria-hidden="true"
       />
@@ -64,7 +65,7 @@ export function AppSidebar() {
     : primaryNavItems
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface-sunken">
+    <aside className="hidden min-w-0 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface-sunken">
       <div className="flex h-16 items-center px-5">
         <BrandMark />
       </div>
@@ -79,6 +80,10 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-border p-3">
+        <div className="mb-1 flex items-center justify-between px-1.5 py-1">
+          <span className="text-xs font-medium text-subtle">Theme</span>
+          <ThemeToggle />
+        </div>
         <UserMenu />
         <p className="mt-3 px-2 text-xs leading-relaxed text-subtle">
           Everyone suggests. Everyone votes. The crowd decides.

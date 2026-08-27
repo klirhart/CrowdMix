@@ -53,7 +53,7 @@ export function QueueItemCard({
   return (
     <div
       className={cx(
-        'group flex items-center gap-2.5 rounded-card border p-2.5 transition-all duration-200 sm:gap-4 sm:p-3',
+        'group flex min-w-0 w-full items-center gap-2.5 rounded-card border p-2.5 transition-all duration-200 sm:gap-4 sm:p-3',
         isCurrentlyPlaying
           ? 'border-accent/50 bg-accent-soft'
           : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface-overlay',
@@ -78,7 +78,7 @@ export function QueueItemCard({
         {isCurrentlyPlaying ? (
           <p className="mb-0.5 text-meta uppercase text-accent">Now playing</p>
         ) : null}
-        <h3 className="truncate font-semibold text-white">{title}</h3>
+        <h3 className="truncate font-semibold text-ink">{title}</h3>
         <p className="truncate text-sm text-muted">{artist}</p>
         <p className="mt-0.5 truncate text-xs text-subtle">Suggested by @{suggestedBy}</p>
       </div>
@@ -108,7 +108,7 @@ export function QueueItemCard({
           )}
         >
           <ChevronUp size={16} strokeWidth={2.75} aria-hidden="true" />
-          <span className="font-mono text-sm font-bold text-white">{votes}</span>
+          <span className="font-mono text-sm font-bold text-ink">{votes}</span>
         </button>
       </div>
     </div>

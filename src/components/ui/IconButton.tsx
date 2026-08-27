@@ -14,13 +14,13 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const toneClasses: Record<IconButtonTone, string> = {
-  neutral: 'text-muted hover:bg-surface-overlay hover:text-white',
+  neutral: 'text-muted hover:bg-surface-overlay hover:text-ink',
   accent: 'text-accent hover:bg-accent-soft hover:text-accent-hover',
   danger: 'text-subtle hover:bg-live/15 hover:text-live',
 }
 
 const activeClasses: Record<IconButtonTone, string> = {
-  neutral: 'bg-surface-overlay text-white',
+  neutral: 'bg-surface-overlay text-ink',
   accent: 'bg-accent text-white hover:bg-accent-hover hover:text-white',
   danger: 'bg-live/20 text-live',
 }

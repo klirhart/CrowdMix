@@ -20,7 +20,7 @@ export function PageShell({ children, width = 'default', className = '' }: PageS
   return (
     <div
       className={cx(
-        'mx-auto w-full animate-enter px-5 sm:px-8',
+        'mx-auto min-w-0 w-full animate-enter px-4 sm:px-8',
         className.includes('py-') ? undefined : 'py-8 sm:py-12',
         widthClasses[width],
         className,
@@ -49,7 +49,7 @@ export function PageHeader({
   return (
     <div
       className={cx(
-        'flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between',
+        'flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
     >
@@ -62,7 +62,7 @@ export function PageHeader({
           <p className="mt-2.5 text-[15px] leading-relaxed text-muted">{description}</p>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   )
 }

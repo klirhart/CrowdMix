@@ -20,11 +20,11 @@ export function ProtectedRoute() {
           <h2 className="text-title">Supabase not configured</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             Copy{' '}
-            <code className="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-white">
+            <code className="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-ink">
               .env.example
             </code>{' '}
             to{' '}
-            <code className="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-white">
+            <code className="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-ink">
               .env
             </code>{' '}
             and add your Supabase URL and anon key.
@@ -39,7 +39,13 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    )
   }
 
   return <Outlet />
