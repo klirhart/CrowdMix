@@ -152,11 +152,16 @@ export function SidebarRoomList({ userId }: SidebarRoomListProps) {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
+      setRooms([])
       setLoading(false)
       return
     }
 
     let active = true
+    setRooms([])
+    setLoading(true)
+    setPending(null)
+    setActionError(null)
 
     const loadRooms = async () => {
       try {

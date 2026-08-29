@@ -2,9 +2,10 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { PlugZap } from 'lucide-react'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/contexts/AuthContext'
+import { withAuthRedirect } from '@/lib/auth-validation'
 
 export function ProtectedRoute() {
-  const { user, loading, isConfigured } = useAuth()
+  const { user, profile, loading, isConfigured } = useAuth()
   const location = useLocation()
 
   if (!isConfigured) {
@@ -39,13 +40,18 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
+    const from = `${location.pathname}${location.search}`
     return (
       <Navigate
-        to="/login"
+        to={withAuthRedirect('/login', from)}
         replace
-        state={{ from: `${location.pathname}${location.search}` }}
+        state={{ from }}
       />
     )
+  }
+
+  if (profile && profile.id !== user.id) {
+    return <LoadingSpinner label="Checking your session..." />
   }
 
   return <Outlet />

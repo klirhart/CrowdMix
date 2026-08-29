@@ -92,7 +92,7 @@ function RoomGrid({ rooms }: { rooms: Room[] }) {
 }
 
 export function HomePage() {
-  const { profile, isConfigured } = useAuth()
+  const { user, profile, isConfigured } = useAuth()
   const [joinedRooms, setJoinedRooms] = useState<Room[]>([])
   const [createdRooms, setCreatedRooms] = useState<Room[]>([])
   const [publicRooms, setPublicRooms] = useState<Room[]>([])
@@ -102,33 +102,59 @@ export function HomePage() {
   usePageTitle('Home')
 
   useEffect(() => {
-    const loadRooms = async () => {
-      if (!profile || !isConfigured) {
-        setLoading(false)
-        return
-      }
+    const userId = user?.id
 
+    if (!isConfigured || !userId || !profile || profile.id !== userId) {
+      setJoinedRooms([])
+      setCreatedRooms([])
+      setPublicRooms([])
+      setLoading(Boolean(userId && profile && profile.id !== userId))
+      setError(null)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    setJoinedRooms([])
+    setCreatedRooms([])
+    setPublicRooms([])
+
+    const loadRooms = async () => {
       try {
         const [joined, created, publicList] = await Promise.all([
-          getRoomsJoinedByUser(profile.id),
-          getRoomsCreatedByUser(profile.id),
+          getRoomsJoinedByUser(userId),
+          getRoomsCreatedByUser(userId),
           getPublicRooms(20),
         ])
+
+        if (cancelled) {
+          return
+        }
 
         setJoinedRooms(joined)
         setCreatedRooms(created)
         setPublicRooms(publicList)
       } catch (err) {
+        if (cancelled) {
+          return
+        }
         setError(
           err instanceof Error ? err.message : 'Failed to load rooms'
         )
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    loadRooms()
-  }, [profile, isConfigured])
+    void loadRooms()
+
+    return () => {
+      cancelled = true
+    }
+  }, [profile?.id, user?.id, isConfigured])
 
   const memberRooms = profile
     ? joinedRooms.filter((room) => room.created_by !== profile.id)

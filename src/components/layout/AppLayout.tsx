@@ -79,7 +79,7 @@ export function AppLayout() {
   const { user, loading } = useAuth()
 
   if (user) {
-    return <SignedInShell />
+    return <SignedInShell key={user.id} />
   }
 
   // While the session resolves, keep the guest chrome but hide the auth CTAs so

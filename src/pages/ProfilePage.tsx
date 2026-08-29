@@ -89,6 +89,11 @@ export function ProfilePage() {
       return
     }
 
+    setProfile(null)
+    setCreatedRooms([])
+    setRoomHistory([])
+    setActivity({ songsSuggested: 0, votesCast: 0, roomsJoined: 0 })
+
     const loadProfile = async () => {
       setLoading(true)
       setError(null)

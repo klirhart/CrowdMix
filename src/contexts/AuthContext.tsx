@@ -4,11 +4,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
 import { fetchProfileById } from '@/lib/profiles'
+import { resetClientSessionState } from '@/lib/session-reset'
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
 import type { Profile } from '@/types/profile'
 
@@ -31,30 +33,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const isConfigured = isSupabaseConfigured()
+  const userIdRef = useRef<string | null>(null)
+  const userRef = useRef<User | null>(null)
+  const profileRequestId = useRef(0)
+  const activeRef = useRef(true)
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
+    const requestId = ++profileRequestId.current
+
     if (!nextUser || !isConfigured) {
-      setProfile(null)
+      if (requestId === profileRequestId.current) {
+        setProfile(null)
+      }
       return
     }
 
     try {
       const nextProfile = await fetchProfileById(nextUser.id)
+      if (requestId !== profileRequestId.current || !activeRef.current) {
+        return
+      }
       setProfile(nextProfile)
     } catch {
+      if (requestId !== profileRequestId.current || !activeRef.current) {
+        return
+      }
       setProfile(null)
     }
   }, [isConfigured])
 
   const applyProfile = useCallback((nextProfile: Profile) => {
+    if (userIdRef.current && nextProfile.id !== userIdRef.current) {
+      return
+    }
     setProfile(nextProfile)
   }, [])
 
   const refreshProfile = useCallback(async () => {
-    await loadProfile(user)
-  }, [loadProfile, user])
+    await loadProfile(userRef.current)
+  }, [loadProfile])
 
   const signOut = useCallback(async () => {
+    resetClientSessionState()
     const supabase = getSupabaseClient()
     const { error } = await supabase.auth.signOut()
 
@@ -70,16 +90,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const supabase = getSupabaseClient()
-    let active = true
+    activeRef.current = true
 
-    const initialize = async () => {
-      const { data, error } = await supabase.auth.getSession()
+    const applyAuthState = async (
+      event: AuthChangeEvent | 'BOOTSTRAP',
+      nextSession: Session | null,
+    ) => {
+      if (!activeRef.current) {
+        return
+      }
 
-      if (!active) {
+      const nextUser = nextSession?.user ?? null
+      const nextId = nextUser?.id ?? null
+      const previousId = userIdRef.current
+      const identityChanged = previousId !== nextId
+
+      setSession(nextSession)
+
+      if (!identityChanged) {
+        userRef.current = nextUser
+        if (event === 'USER_UPDATED' && nextUser) {
+          setUser(nextUser)
+          await loadProfile(nextUser)
+        }
+        if (!nextUser) {
+          setLoading(false)
+        }
+        return
+      }
+
+      profileRequestId.current += 1
+      setProfile(null)
+      if (previousId) {
+        resetClientSessionState()
+      }
+
+      userIdRef.current = nextId
+      userRef.current = nextUser
+      setUser(nextUser)
+
+      if (!nextUser) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      await loadProfile(nextUser)
+      if (activeRef.current && userIdRef.current === nextUser.id) {
+        setLoading(false)
+      }
+    }
+
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!activeRef.current) {
         return
       }
 
       if (error) {
+        userIdRef.current = null
+        userRef.current = null
         setSession(null)
         setUser(null)
         setProfile(null)
@@ -87,51 +156,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      await loadProfile(data.session?.user ?? null)
-
-      if (active) {
-        setLoading(false)
-      }
-    }
-
-    void initialize()
+      void applyAuthState('BOOTSTRAP', data.session)
+    })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession)
-      setUser(nextSession?.user ?? null)
-
-      if (event === 'INITIAL_SESSION') {
-        return
-      }
-
-      if (event === 'SIGNED_OUT') {
-        setProfile(null)
-        setLoading(false)
-        return
-      }
-
-      if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        void loadProfile(nextSession?.user ?? null)
-        return
-      }
-
-      if (event === 'SIGNED_IN') {
-        void (async () => {
-          setLoading(true)
-          await loadProfile(nextSession?.user ?? null)
-          if (active) {
-            setLoading(false)
-          }
-        })()
-      }
+      void applyAuthState(event, nextSession)
     })
 
     return () => {
-      active = false
+      activeRef.current = false
       subscription.unsubscribe()
     }
   }, [isConfigured, loadProfile])
