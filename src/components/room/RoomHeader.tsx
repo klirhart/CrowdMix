@@ -27,41 +27,39 @@ export function RoomHeader({
   const closeShare = useCallback(() => setShareOpen(false), [])
 
   return (
-    <header className="sticky top-14 z-20 min-w-0 max-w-full border-b border-border bg-surface/90 backdrop-blur-lg lg:top-0">
-      <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:gap-4 sm:px-8">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">
-              {room.name}
-            </h1>
-            {room.is_active ? (
-              <Badge tone="live" pulse className="max-sm:hidden">
-                LIVE
-              </Badge>
-            ) : null}
-          </div>
-          <p className="mt-0.5 flex items-center gap-2 text-xs text-subtle">
-            <span className="font-mono font-semibold uppercase tracking-widest text-muted">
-              {room.room_code}
-            </span>
-            <span aria-hidden="true">·</span>
-            <span className="inline-flex items-center gap-1">
-              <Headphones size={12} strokeWidth={2.25} aria-hidden="true" />
-              {listenerCount} listening
-            </span>
-          </p>
+    <header className="room-page-header flex min-w-0 max-w-full shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5 sm:gap-4">
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">
+            {room.name}
+          </h1>
+          {room.is_active ? (
+            <Badge tone="live" pulse className="max-sm:hidden">
+              LIVE
+            </Badge>
+          ) : null}
         </div>
-
-        <IconButton
-          label="Invite people"
-          icon={<QrCode size={17} strokeWidth={2.25} />}
-          tone="accent"
-          onClick={() => setShareOpen(true)}
-          aria-haspopup="dialog"
-          aria-expanded={shareOpen}
-          className="shrink-0"
-        />
+        <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-subtle">
+          <span className="font-mono font-semibold uppercase tracking-widest text-muted">
+            {room.room_code}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center gap-1">
+            <Headphones size={12} strokeWidth={2.25} aria-hidden="true" />
+            {listenerCount} listening
+          </span>
+        </p>
       </div>
+
+      <IconButton
+        label="Invite people"
+        icon={<QrCode size={17} strokeWidth={2.25} />}
+        tone="accent"
+        onClick={() => setShareOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={shareOpen}
+        className="ml-auto shrink-0"
+      />
 
       <Modal open={shareOpen} title="Invite People" onClose={closeShare}>
         <ShareRoomPanel
