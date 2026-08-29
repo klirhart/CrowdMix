@@ -331,6 +331,7 @@ html.light {
 }
 
 .room-page-shell,
+.room-page-header,
 .room-page-grid,
 .room-page-main,
 .room-page-queue,
@@ -352,6 +353,10 @@ html.light {
     flex: 1 1 0%;
     min-height: 0;
     flex-direction: column;
+  }
+
+  .room-page-header {
+    flex-shrink: 0;
   }
 
   .room-page-grid {

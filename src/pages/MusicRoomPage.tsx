@@ -589,16 +589,16 @@ export function MusicRoomPage() {
         nowPlaying && 'max-lg:pb-[6.25rem]',
       )}
     >
-      <RoomHeader
-        room={room}
-        listenerCount={onlineMembers.length}
-        copied={copied}
-        roomLink={roomLink}
-        qrImageUrl={qrImageUrl}
-        onCopyRoomLink={handleCopyRoomLink}
-      />
+      <PageShell width="wide" className="room-page-shell flex min-w-0 flex-col gap-5 py-5">
+        <RoomHeader
+          room={room}
+          listenerCount={onlineMembers.length}
+          copied={copied}
+          roomLink={roomLink}
+          qrImageUrl={qrImageUrl}
+          onCopyRoomLink={handleCopyRoomLink}
+        />
 
-      <PageShell width="wide" className="room-page-shell flex min-w-0 flex-col py-5">
         <div className="room-page-grid grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-3 xl:grid-rows-1 xl:gap-6">
           {/* Main Content */}
           <div className="room-page-main flex min-w-0 flex-col gap-5 xl:col-span-2">
