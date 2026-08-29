@@ -105,6 +105,13 @@ function applyLocalVolume(player: YouTubePlayer, volume: number) {
   engine?.setAttribute('data-muted', next <= 0 ? 'true' : 'false')
 }
 
+export function resetPlaybackEngine(): void {
+  playerGeneration += 1
+  destroyYouTubePlayer(livePlayer)
+  livePlayer = undefined
+  silenceOrphanIframes(undefined)
+}
+
 function destroyYouTubePlayer(player: YouTubePlayer | undefined) {
   if (!player) return
 
@@ -259,6 +266,7 @@ export const SyncedYouTubePlayer = forwardRef<PlaybackEngineHandle, SyncedYouTub
       target.style.pointerEvents = 'none'
       host.append(target)
 
+      const createdAt = Date.now()
       const expectedTime = () => roomElapsedSeconds(startedAtRef.current)
 
       const fireEnded = () => {
@@ -283,6 +291,11 @@ export const SyncedYouTubePlayer = forwardRef<PlaybackEngineHandle, SyncedYouTub
           return true
         }
         return false
+      }
+
+      const isSpuriousEnded = (player: YouTubePlayer) => {
+        if (Date.now() - createdAt >= 1500) return false
+        return !roomPlaybackFinished(startedAtRef.current, reportDuration(player))
       }
 
       const roomPosition = (player: YouTubePlayer) => {
@@ -337,7 +350,23 @@ export const SyncedYouTubePlayer = forwardRef<PlaybackEngineHandle, SyncedYouTub
         const state = player.getPlayerState()
 
         if (state === window.YT?.PlayerState?.ENDED) {
-          fireEnded()
+          if (isSpuriousEnded(player)) {
+            seekToRoomClock(player)
+            return
+          }
+
+          if (maybeFinishFromClock(player)) {
+            return
+          }
+
+          const duration = reportDuration(player)
+          const actual = player.getCurrentTime?.() ?? 0
+          if (duration > 1 && actual >= duration - 1.25) {
+            fireEnded()
+            return
+          }
+
+          seekToRoomClock(player)
           return
         }
 
@@ -457,6 +486,11 @@ export const SyncedYouTubePlayer = forwardRef<PlaybackEngineHandle, SyncedYouTub
               }
 
               if (event.data !== window.YT?.PlayerState?.ENDED) {
+                return
+              }
+
+              if (isSpuriousEnded(event.target)) {
+                seekToRoomClock(event.target)
                 return
               }
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/Button'
 import { cx } from '@/components/ui/cx'
@@ -29,14 +29,17 @@ export function ConfirmDialog({
   const titleId = useId()
   const descriptionId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
+  const [overlayArmed, setOverlayArmed] = useState(false)
 
   useEffect(() => {
     if (!open) {
+      setOverlayArmed(false)
       return
     }
 
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
     dialogRef.current?.focus()
+    const armOverlay = window.setTimeout(() => setOverlayArmed(true), 150)
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !loading) {
@@ -49,6 +52,7 @@ export function ConfirmDialog({
     document.body.style.overflow = 'hidden'
 
     return () => {
+      window.clearTimeout(armOverlay)
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
       previous?.focus()
@@ -63,7 +67,7 @@ export function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-5">
       <div
         className="absolute inset-0 bg-black/70"
-        onClick={loading ? undefined : onCancel}
+        onClick={loading || !overlayArmed ? undefined : onCancel}
         aria-hidden="true"
       />
       <div

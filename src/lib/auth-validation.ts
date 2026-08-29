@@ -165,15 +165,48 @@ export function getAuthErrorMessage(error: unknown): string {
   return message || 'Something went wrong. Please try again.'
 }
 
+/** Query key for post-auth return paths, e.g. `/login?redirect=/r/HD9Z7`. */
+export const AUTH_REDIRECT_PARAM = 'redirect'
+
 /** Only allow in-app paths after login so `from` cannot bounce users off-site. */
 export function safeInternalPath(value: unknown, fallback = '/home'): string {
   if (typeof value !== 'string') {
     return fallback
   }
 
-  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+  const trimmed = value.trim()
+
+  if (
+    !trimmed.startsWith('/')
+    || trimmed.startsWith('//')
+    || trimmed.includes('\\')
+    || trimmed.includes('://')
+  ) {
     return fallback
   }
 
-  return value
+  return trimmed
+}
+
+function redirectFromState(state: unknown): unknown {
+  if (typeof state !== 'object' || state === null || !('from' in state)) {
+    return undefined
+  }
+
+  return state.from
+}
+
+/** Prefer `?redirect=` (survives refresh and login↔signup) over router state. */
+export function readAuthRedirect(search: string, state?: unknown, fallback = '/home'): string {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search)
+  return safeInternalPath(params.get(AUTH_REDIRECT_PARAM) ?? redirectFromState(state), fallback)
+}
+
+export function withAuthRedirect(pathname: '/login' | '/signup', redirectTo: string): string {
+  const safe = safeInternalPath(redirectTo)
+  if (safe === '/home') {
+    return pathname
+  }
+
+  return `${pathname}?${AUTH_REDIRECT_PARAM}=${encodeURIComponent(safe)}`
 }

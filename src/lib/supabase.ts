@@ -26,3 +26,11 @@ export function getSupabaseClient(): SupabaseClient {
 
   return supabaseClient
 }
+
+export function removeAllRealtimeChannels(): void {
+  if (!supabaseClient) {
+    return
+  }
+
+  void supabaseClient.removeAllChannels()
+}

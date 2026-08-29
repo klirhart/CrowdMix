@@ -109,6 +109,9 @@ export function RoomChatPanel({
 
   useEffect(() => {
     let active = true
+    setMessages([])
+    setDraft('')
+    setError(null)
 
     const loadMessages = async () => {
       try {
@@ -147,7 +150,7 @@ export function RoomChatPanel({
       active = false
       void supabase.removeChannel(channel)
     }
-  }, [roomId])
+  }, [roomId, currentUserId])
 
   useEffect(() => {
     const list = listRef.current

@@ -97,32 +97,47 @@ export function MusicRoomPage() {
   )
 
   useEffect(() => {
+    const userId = user?.id
+
+    if (!roomCode) {
+      setError('Room code not found')
+      setLoading(false)
+      return
+    }
+
+    if (!userId) {
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    setActionError(null)
+    setRoom(null)
+    setMembers([])
+    setQueue([])
+    setPlayHistory([])
+    endingItemIdRef.current = null
+
     const loadRoomData = async () => {
-      if (!roomCode) {
-        setError('Room code not found')
-        setLoading(false)
-        return
-      }
-
       try {
-        setError(null)
-
-        // Get room by code
         const roomData = await getRoomByCode(roomCode.toUpperCase())
 
+        if (cancelled) {
+          return
+        }
+
         if (!roomData) {
-          setError('Room not found')
+          setError('Room not found. This room may no longer exist or the room code may be invalid.')
           setLoading(false)
           return
         }
 
-        if (!user) {
-          setError('You must be logged in to join a room')
-          setLoading(false)
+        const memberStatus = await isRoomMember(roomData.id, userId)
+        if (cancelled) {
           return
         }
 
-        const memberStatus = await isRoomMember(roomData.id, user.id)
         if (!memberStatus) {
           if (!roomData.is_active) {
             setError('This room is no longer active.')
@@ -130,54 +145,73 @@ export function MusicRoomPage() {
             return
           }
 
-          if (roomData.visibility === 'private' && roomData.created_by !== user.id) {
+          if (roomData.visibility === 'private' && roomData.created_by !== userId) {
             setError('This room is private. You need an invitation to join.')
             setLoading(false)
             return
           }
 
-          await addRoomMember(roomData.id, user.id)
+          await addRoomMember(roomData.id, userId)
+          if (cancelled) {
+            return
+          }
         }
 
-        await markMemberPresent(roomData.id, user.id).catch(() => undefined)
+        await markMemberPresent(roomData.id, userId).catch(() => undefined)
+        if (cancelled) {
+          return
+        }
 
-        // Load members, queue, and recent playback history after presence so
-        // the first paint does not show the current user as offline.
         const [membersData, queueData, historyData] = await Promise.all([
           getRoomMembers(roomData.id),
-          getRoomQueue(roomData.id, user.id),
+          getRoomQueue(roomData.id, userId),
           getRoomPlayHistory(roomData.id),
         ])
+
+        if (cancelled) {
+          return
+        }
 
         setRoom(roomData)
         setMembers(membersData)
         setQueue(queueData)
         setPlayHistory(historyData)
       } catch (err) {
+        if (cancelled) {
+          return
+        }
         setError(
           err instanceof Error ? err.message : 'Failed to load room'
         )
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    loadRoomData()
-  }, [roomCode, user])
+    void loadRoomData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [roomCode, user?.id])
 
   useEffect(() => {
-    if (!room || !user) return
+    const userId = user?.id
+    if (!room || !userId) return
 
+    const roomId = room.id
     const supabase = getSupabaseClient()
     const refreshRoomData = async () => {
       const [membersData, queueData] = await Promise.all([
-        getRoomMembers(room.id),
-        getRoomQueue(room.id, user.id),
+        getRoomMembers(roomId),
+        getRoomQueue(roomId, userId),
       ])
       setMembers(membersData)
       setQueue(queueData)
       try {
-        setPlayHistory(await getRoomPlayHistory(room.id))
+        setPlayHistory(await getRoomPlayHistory(roomId))
       } catch {
         // Keep the last known history if this refresh loses the embed.
       }
@@ -185,31 +219,31 @@ export function MusicRoomPage() {
 
     setMembers((current) =>
       current.map((member) =>
-        member.user_id === user.id ? { ...member, is_online: true } : member,
+        member.user_id === userId ? { ...member, is_online: true } : member,
       ),
     )
-    void markMemberPresent(room.id, user.id).catch(() => undefined)
+    void markMemberPresent(roomId, userId).catch(() => undefined)
     const channel = supabase
-      .channel(`room:${room.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_items', filter: `room_id=eq.${room.id}` }, () => {
+      .channel(`room:${roomId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_items', filter: `room_id=eq.${roomId}` }, () => {
         void refreshRoomData()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => {
         void refreshRoomData()
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${room.id}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'room_members', filter: `room_id=eq.${roomId}` }, () => {
         void refreshRoomData()
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'play_history', filter: `room_id=eq.${room.id}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'play_history', filter: `room_id=eq.${roomId}` }, () => {
         void refreshRoomData()
       })
       .subscribe()
 
     return () => {
-      scheduleMemberAway(room.id, user.id)
+      scheduleMemberAway(roomId, userId)
       void supabase.removeChannel(channel)
     }
-  }, [room, user])
+  }, [room, user?.id])
 
   const handleCopyRoomLink = async () => {
     try {
@@ -472,6 +506,7 @@ export function MusicRoomPage() {
   useEffect(() => {
     const startedAt = nowPlaying?.playing_started_at
     if (!startedAt || trackDuration <= 1) return
+    if (engineState !== 'live') return
 
     const check = () => {
       if (roomPlaybackFinished(startedAt, trackDuration)) {
@@ -482,7 +517,7 @@ export function MusicRoomPage() {
     check()
     const timer = window.setInterval(check, 400)
     return () => window.clearInterval(timer)
-  }, [nowPlaying?.playing_started_at, trackDuration, handleTrackEnded])
+  }, [nowPlaying?.playing_started_at, trackDuration, handleTrackEnded, engineState])
 
   useEffect(() => {
     if (!room) return
@@ -536,7 +571,7 @@ export function MusicRoomPage() {
   if (error || !room) {
     return (
       <PageShell width="narrow">
-        <Alert variant="error">{error || 'Room not found'}</Alert>
+        <Alert variant="error">{error || 'Room not found. This room may no longer exist or the room code may be invalid.'}</Alert>
         <Button onClick={() => navigate('/home')} className="mt-5">
           Back to Home
         </Button>

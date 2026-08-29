@@ -604,3 +604,11 @@ export function scheduleMemberAway(roomId: string, userId: string): void {
     }, PRESENCE_LEAVE_MS),
   )
 }
+
+/** Drop pending presence-leave timers without writing to the database. */
+export function clearPresenceLeaveTimers(): void {
+  for (const timer of presenceLeaveTimers.values()) {
+    clearTimeout(timer)
+  }
+  presenceLeaveTimers.clear()
+}

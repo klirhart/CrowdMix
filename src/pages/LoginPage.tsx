@@ -8,9 +8,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import {
   getAuthErrorMessage,
-  safeInternalPath,
+  readAuthRedirect,
   validateEmail,
   validatePassword,
+  withAuthRedirect,
 } from '@/lib/auth-validation'
 import { getSupabaseClient } from '@/lib/supabase'
 
@@ -25,6 +26,8 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
 
   usePageTitle('Log in')
+
+  const redirectTo = readAuthRedirect(location.search, location.state)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -64,14 +67,6 @@ export function LoginPage() {
       if (signInError) {
         throw signInError
       }
-
-      const redirectTo = safeInternalPath(
-        typeof location.state === 'object' &&
-          location.state !== null &&
-          'from' in location.state
-          ? location.state.from
-          : undefined,
-      )
 
       navigate(redirectTo, { replace: true })
     } catch (caughtError) {
@@ -131,7 +126,7 @@ export function LoginPage() {
       <p className="text-center text-sm text-muted">
         Don&apos;t have an account?{' '}
         <Link
-          to="/signup"
+          to={withAuthRedirect('/signup', redirectTo)}
           className="font-semibold text-accent transition-colors hover:text-accent-hover"
         >
           Sign up

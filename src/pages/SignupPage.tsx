@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AtSign, IdCard, Lock, Mail } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -9,16 +9,19 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import {
   getAuthErrorMessage,
   normalizeUsername,
+  readAuthRedirect,
   validateDisplayName,
   validateEmail,
   validatePassword,
   validateUsername,
+  withAuthRedirect,
 } from '@/lib/auth-validation'
 import { isUsernameAvailable } from '@/lib/profiles'
 import { getSupabaseClient } from '@/lib/supabase'
 
 export function SignupPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isConfigured } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,6 +38,8 @@ export function SignupPage() {
   const [loading, setLoading] = useState(false)
 
   usePageTitle('Sign up')
+
+  const redirectTo = readAuthRedirect(location.search, location.state)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -93,6 +98,7 @@ export function SignupPage() {
         email: nextEmail.trim(),
         password: nextPassword,
         options: {
+          emailRedirectTo: `${window.location.origin}${redirectTo}`,
           data: {
             username: normalizedUsername,
             display_name: nextDisplayName.trim(),
@@ -105,12 +111,14 @@ export function SignupPage() {
       }
 
       if (data.session) {
-        navigate('/home', { replace: true })
+        navigate(redirectTo, { replace: true })
         return
       }
 
       setSuccessMessage(
-        'Account created. Check your email to confirm your address, then log in.',
+        redirectTo.startsWith('/r/')
+          ? 'Account created. Check your email to confirm your address. After you confirm, you will join the room from the invite.'
+          : 'Account created. Check your email to confirm your address, then log in.',
       )
     } catch (caughtError) {
       setError(getAuthErrorMessage(caughtError))
@@ -196,7 +204,7 @@ export function SignupPage() {
       <p className="text-center text-sm text-muted">
         Already have an account?{' '}
         <Link
-          to="/login"
+          to={withAuthRedirect('/login', redirectTo)}
           className="font-semibold text-accent transition-colors hover:text-accent-hover"
         >
           Log in
