@@ -6,12 +6,14 @@ import { AuthLayout } from '@/components/layout/AuthLayout'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/contexts/AuthContext'
 import { CreateRoomPage } from '@/pages/CreateRoomPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { HomePage } from '@/pages/HomePage'
 import { JoinRoomPage } from '@/pages/JoinRoomPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { MusicRoomPage } from '@/pages/MusicRoomPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { SignupPage } from '@/pages/SignupPage'
 
 function RootRedirect() {
@@ -43,7 +45,12 @@ export function AppRoutes() {
         <Route element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
         </Route>
+      </Route>
+
+      <Route element={<AuthLayout />}>
+        <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

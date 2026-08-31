@@ -1,12 +1,10 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { PlugZap } from 'lucide-react'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/contexts/AuthContext'
-import { withAuthRedirect } from '@/lib/auth-validation'
 
 export function ProtectedRoute() {
   const { user, profile, loading, isConfigured } = useAuth()
-  const location = useLocation()
 
   if (!isConfigured) {
     return (
@@ -40,14 +38,7 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
-    const from = `${location.pathname}${location.search}`
-    return (
-      <Navigate
-        to={withAuthRedirect('/login', from)}
-        replace
-        state={{ from }}
-      />
-    )
+    return <Navigate to="/login" replace />
   }
 
   if (profile && profile.id !== user.id) {

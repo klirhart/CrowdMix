@@ -6,6 +6,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string | null
   hint?: ReactNode
   icon?: ReactNode
+  trailing?: ReactNode
   hideLabel?: boolean
   /** Applied to the field wrapper; `className` targets the input itself. */
   wrapperClassName?: string
@@ -16,6 +17,7 @@ export function Input({
   error,
   hint,
   icon,
+  trailing,
   hideLabel = false,
   wrapperClassName = '',
   id,
@@ -58,12 +60,17 @@ export function Input({
             'transition-colors duration-150 placeholder:text-subtle',
             'hover:border-border-strong focus:border-accent focus:bg-surface',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            icon ? 'pl-10 pr-4' : 'px-4',
+            icon && trailing ? 'pl-10 pr-11' : icon ? 'pl-10 pr-4' : trailing ? 'px-4 pr-11' : 'px-4',
             error ? 'border-live/70' : 'border-border',
             className,
           )}
           {...props}
         />
+        {trailing ? (
+          <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+            {trailing}
+          </div>
+        ) : null}
       </div>
 
       {error ? (

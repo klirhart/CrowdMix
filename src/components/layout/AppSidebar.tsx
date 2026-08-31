@@ -8,6 +8,7 @@ import {
   type NavItem,
 } from '@/components/layout/nav-items'
 import { UserMenu } from '@/components/auth/UserMenu'
+import { JoinRequestInbox } from '@/components/room/JoinRequestInbox'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cx } from '@/components/ui/cx'
 import { useAuth } from '@/contexts/AuthContext'
@@ -65,7 +66,7 @@ export function AppSidebar() {
     : primaryNavItems
 
   return (
-    <aside className="hidden min-w-0 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface-sunken">
+    <aside className="hidden min-w-0 lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface-sunken">
       <div className="flex h-16 items-center px-5">
         <BrandMark />
       </div>
@@ -82,7 +83,10 @@ export function AppSidebar() {
       <div className="border-t border-border p-3">
         <div className="mb-1 flex items-center justify-between px-1.5 py-1">
           <span className="text-xs font-medium text-subtle">Theme</span>
-          <ThemeToggle />
+          <div className="flex items-center gap-0.5">
+            <JoinRequestInbox placement="sidebar" />
+            <ThemeToggle />
+          </div>
         </div>
         <UserMenu />
         <p className="mt-3 px-2 text-xs leading-relaxed text-subtle">

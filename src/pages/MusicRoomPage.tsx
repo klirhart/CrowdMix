@@ -20,7 +20,9 @@ import { Toast } from '@/components/ui/Toast'
 import { cx } from '@/components/ui/cx'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { addRoomMember, getRoomByCode, getRoomMembers, isRoomMember, markMemberPresent, removeRoomMember, scheduleMemberAway } from '@/lib/rooms'
+import { applyRoomPresence, useRoomPresence } from '@/hooks/useRoomPresence'
+import { getPrivateRoomAccess, requestToJoinPrivateRoom, type PrivateRoomAccess } from '@/lib/join-requests'
+import { addRoomMember, getRoomByCode, getRoomMembers, isRoomMember, markMemberPresent, removeRoomMember } from '@/lib/rooms'
 import { advanceRoomPlayback, ensureRoomPlaying, getRoomPlayHistory, getRoomQueue, removeQueueItem, removeVote, suggestSong, upsertSong, voteOnSong } from '@/lib/queue'
 import { getSupabaseClient } from '@/lib/supabase'
 import { searchYouTube, fetchYouTubeDuration, type YouTubeSearchResult } from '@/lib/youtube'
@@ -56,6 +58,9 @@ export function MusicRoomPage() {
   const [queue, setQueue] = useState<QueueItemWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [privateAccess, setPrivateAccess] = useState<PrivateRoomAccess | null>(null)
+  const [requestingJoin, setRequestingJoin] = useState(false)
+  const [roomLoadNonce, setRoomLoadNonce] = useState(0)
   const [actionError, setActionError] = useState<string | null>(null)
   const [showSuggestForm, setShowSuggestForm] = useState(false)
   const [suggestion, setSuggestion] = useState({ youtubeId: '', title: '', artist: '' })
@@ -74,6 +79,7 @@ export function MusicRoomPage() {
   const [toast, setToast] = useState<{ message: string; tone: 'success' | 'error' } | null>(null)
   const engineRef = useRef<PlaybackEngineHandle | null>(null)
   const endingItemIdRef = useRef<string | null>(null)
+  const presentIds = useRoomPresence(room?.id, user?.id)
 
   useEffect(() => {
     setDeviceVolume(readDeviceVolume())
@@ -112,6 +118,7 @@ export function MusicRoomPage() {
     let cancelled = false
     setLoading(true)
     setError(null)
+    setPrivateAccess(null)
     setActionError(null)
     setRoom(null)
     setMembers([])
@@ -128,6 +135,17 @@ export function MusicRoomPage() {
         }
 
         if (!roomData) {
+          const access = await getPrivateRoomAccess(roomCode.toUpperCase())
+          if (cancelled) {
+            return
+          }
+
+          if (access.found && !access.is_member) {
+            setPrivateAccess(access)
+            setLoading(false)
+            return
+          }
+
           setError('Room not found. This room may no longer exist or the room code may be invalid.')
           setLoading(false)
           return
@@ -146,7 +164,17 @@ export function MusicRoomPage() {
           }
 
           if (roomData.visibility === 'private' && roomData.created_by !== userId) {
-            setError('This room is private. You need an invitation to join.')
+            const access = await getPrivateRoomAccess(roomData.room_code)
+            if (cancelled) {
+              return
+            }
+            setPrivateAccess(access.found ? access : {
+              found: true,
+              is_member: false,
+              can_request: true,
+              room_code: roomData.room_code,
+              room_name: roomData.name,
+            })
             setLoading(false)
             return
           }
@@ -195,7 +223,7 @@ export function MusicRoomPage() {
     return () => {
       cancelled = true
     }
-  }, [roomCode, user?.id])
+  }, [roomCode, roomLoadNonce, user?.id])
 
   useEffect(() => {
     const userId = user?.id
@@ -217,12 +245,6 @@ export function MusicRoomPage() {
       }
     }
 
-    setMembers((current) =>
-      current.map((member) =>
-        member.user_id === userId ? { ...member, is_online: true } : member,
-      ),
-    )
-    void markMemberPresent(roomId, userId).catch(() => undefined)
     const channel = supabase
       .channel(`room:${roomId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_items', filter: `room_id=eq.${roomId}` }, () => {
@@ -240,10 +262,54 @@ export function MusicRoomPage() {
       .subscribe()
 
     return () => {
-      scheduleMemberAway(roomId, userId)
       void supabase.removeChannel(channel)
     }
   }, [room, user?.id])
+
+  useEffect(() => {
+    if (!user?.id || !privateAccess?.found || privateAccess.is_member) {
+      return
+    }
+
+    const supabase = getSupabaseClient()
+    const channel = supabase
+      .channel(`join-request-access:${user.id}:${roomCode ?? ''}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'room_join_requests' },
+        () => {
+          if (!roomCode) return
+          void getPrivateRoomAccess(roomCode.toUpperCase()).then((access) => {
+            if (access.is_member) {
+              setPrivateAccess(null)
+              setRoomLoadNonce((current) => current + 1)
+              return
+            }
+            setPrivateAccess(access)
+          })
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [privateAccess?.found, privateAccess?.is_member, roomCode, user?.id])
+
+  const handleRequestToJoin = async () => {
+    if (!roomCode) return
+
+    setRequestingJoin(true)
+    setError(null)
+    try {
+      const requested = await requestToJoinPrivateRoom(roomCode)
+      setPrivateAccess(requested)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send join request')
+    } finally {
+      setRequestingJoin(false)
+    }
+  }
 
   const handleCopyRoomLink = async () => {
     try {
@@ -557,12 +623,47 @@ export function MusicRoomPage() {
 
   if (loading) {
     return (
-      <PageShell width="wide">
+      <PageShell width="full">
         <div className="aspect-[16/7] w-full animate-pulse rounded-panel border border-border bg-surface-raised" />
         <div className="mt-8 space-y-3">
           <QueueRowSkeleton />
           <QueueRowSkeleton />
           <QueueRowSkeleton />
+        </div>
+      </PageShell>
+    )
+  }
+
+  if (privateAccess?.found && !privateAccess.is_member) {
+    const waiting = privateAccess.status === 'pending'
+    const declined = privateAccess.status === 'declined'
+
+    return (
+      <PageShell width="narrow">
+        <h1 className="text-title">{privateAccess.room_name ?? 'Private room'}</h1>
+        <p className="mt-2 text-sm text-muted">
+          This room is private. The owner must approve your request before you can join.
+        </p>
+        {waiting ? (
+          <Alert variant="info" className="mt-5">
+            Your request is waiting for the room owner to approve.
+          </Alert>
+        ) : null}
+        {declined ? (
+          <Alert variant="error" className="mt-5">
+            Your previous request was declined. You can send another request.
+          </Alert>
+        ) : null}
+        {error ? <Alert variant="error" className="mt-5">{error}</Alert> : null}
+        <div className="mt-5 flex flex-wrap gap-3">
+          {privateAccess.can_request ? (
+            <Button onClick={() => void handleRequestToJoin()} disabled={requestingJoin}>
+              {requestingJoin ? 'Sending request...' : 'Request to join'}
+            </Button>
+          ) : null}
+          <Button variant="secondary" onClick={() => navigate('/home')}>
+            Back to Home
+          </Button>
         </div>
       </PageShell>
     )
@@ -579,17 +680,18 @@ export function MusicRoomPage() {
     )
   }
 
-  const onlineMembers = members.filter((m) => m.is_online)
+  const visibleMembers = applyRoomPresence(members, presentIds, user?.id)
+  const onlineMembers = visibleMembers.filter((m) => m.is_online)
   const pendingCount = queue.filter((item) => item.status !== 'playing').length
 
   return (
     <div
       className={cx(
         'room-page',
-        nowPlaying && 'max-lg:pb-[6.25rem]',
+        nowPlaying && 'room-page-has-player max-lg:pb-[6.25rem]',
       )}
     >
-      <PageShell width="wide" className="room-page-shell flex min-w-0 flex-col gap-5 py-5">
+      <PageShell width="full" className="room-page-shell flex min-w-0 flex-col py-0">
         <RoomHeader
           room={room}
           listenerCount={onlineMembers.length}
@@ -599,9 +701,9 @@ export function MusicRoomPage() {
           onCopyRoomLink={handleCopyRoomLink}
         />
 
-        <div className="room-page-grid grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-3 xl:grid-rows-1 xl:gap-6">
+        <div className="room-page-grid grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_19.5rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem] xl:grid-rows-1 xl:items-stretch xl:gap-5">
           {/* Main Content */}
-          <div className="room-page-main flex min-w-0 flex-col gap-5 xl:col-span-2">
+          <div className="room-page-main flex min-w-0 flex-col gap-4">
             <div className="shrink-0">
               <NowPlayingPanel
                 nowPlaying={nowPlaying}
@@ -696,7 +798,7 @@ export function MusicRoomPage() {
 
                   {queue.length === 0 ? (
                     <EmptyState
-                      className="h-full min-h-0 justify-center py-6"
+                      className="py-8"
                       icon={<Music size={24} strokeWidth={2} />}
                       title="The queue is empty"
                       description="Be the first to suggest a song. Everyone in the room votes on what plays next."
@@ -717,7 +819,7 @@ export function MusicRoomPage() {
                 roomId={room.id}
                 currentUserId={user.id}
                 creatorUserId={room.created_by}
-                members={members}
+                members={visibleMembers}
               />
             ) : null}
           </div>
@@ -725,7 +827,7 @@ export function MusicRoomPage() {
           {/* Sidebar */}
           <div className="room-page-side flex min-w-0 flex-col gap-4">
             <MembersPanel
-              members={members}
+              members={visibleMembers}
               room={room}
               currentUserId={user?.id}
               currentProfile={profile}

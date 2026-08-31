@@ -23,6 +23,7 @@ import { cx } from '@/components/ui/cx'
 import { PageHeader, PageShell } from '@/components/layout/PageShell'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { getPrivateRoomAccess, requestToJoinPrivateRoom } from '@/lib/join-requests'
 import { getRoomByCode, addRoomMember, searchPublicRooms } from '@/lib/rooms'
 import { searchProfiles } from '@/lib/profiles'
 import type { Room } from '@/types/room'
@@ -85,6 +86,7 @@ export function JoinRoomPage() {
   const { user, isConfigured } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [searchError, setSearchError] = useState<string | null>(null)
   const [roomCode, setRoomCode] = useState(
     () => new URLSearchParams(window.location.search).get('room')?.trim().toUpperCase() ?? '',
@@ -109,6 +111,7 @@ export function JoinRoomPage() {
 
   const handleTabChange = (next: JoinTab) => {
     setError(null)
+    setSuccessMessage(null)
     setSearchError(null)
     const nextParams = new URLSearchParams(searchParams)
     if (next === 'code') {
@@ -219,6 +222,7 @@ export function JoinRoomPage() {
   const handleJoinByCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
+    setSuccessMessage(null)
 
     const code = roomCode.trim().toUpperCase()
 
@@ -243,23 +247,48 @@ export function JoinRoomPage() {
       // Get room by code
       const room = await getRoomByCode(code)
 
-      if (!room) {
-        setError('Room not found. Please check the room code.')
-        return
-      }
+      if (room) {
+        if (!room.is_active) {
+          setError('This room is no longer active.')
+          return
+        }
 
-      if (!room.is_active) {
-        setError('This room is no longer active.')
-        return
-      }
+        if (room.visibility !== 'private') {
+          await addRoomMember(room.id, user.id)
+        }
 
-      if (room.visibility === 'private') {
         navigate(`/r/${room.room_code}`)
         return
       }
 
-      await addRoomMember(room.id, user.id)
-      navigate(`/r/${room.room_code}`)
+      const access = await getPrivateRoomAccess(code)
+
+      if (access.found && access.is_member && access.room_code) {
+        navigate(`/r/${access.room_code}`)
+        return
+      }
+
+      if (access.found && access.inactive) {
+        setError('This room is no longer active.')
+        return
+      }
+
+      if (access.found && access.status === 'pending') {
+        setSuccessMessage(
+          `Your request to join ${access.room_name ?? 'this private room'} is waiting for the owner to approve.`,
+        )
+        return
+      }
+
+      if (access.found && access.can_request) {
+        const requested = await requestToJoinPrivateRoom(code)
+        setSuccessMessage(
+          `A join request was sent to the owner of ${requested.room_name ?? 'this private room'}.`,
+        )
+        return
+      }
+
+      setError('Room not found. Please check the room code.')
     } catch (err) {
       if (isAlreadyMemberError(err)) {
         navigate(`/r/${code}`)
@@ -286,6 +315,12 @@ export function JoinRoomPage() {
       {error && (
         <Alert variant="error" className="mt-6">
           {error}
+        </Alert>
+      )}
+
+      {successMessage && (
+        <Alert variant="success" className="mt-6">
+          {successMessage}
         </Alert>
       )}
 
