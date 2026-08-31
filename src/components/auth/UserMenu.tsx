@@ -40,7 +40,7 @@ export function UserMenu({ variant = 'sidebar' }: UserMenuProps) {
     try {
       await signOut()
       setConfirmOpen(false)
-      navigate('/login', { replace: true })
+      navigate('/login', { replace: true, state: null })
     } catch (caughtError) {
       setError(getAuthErrorMessage(caughtError))
     } finally {

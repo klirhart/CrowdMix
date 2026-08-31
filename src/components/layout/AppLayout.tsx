@@ -3,6 +3,7 @@ import { UserMenu } from '@/components/auth/UserMenu'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 import { BrandMark } from '@/components/layout/BrandMark'
 import { MobileTabBar } from '@/components/layout/MobileTabBar'
+import { JoinRequestInbox } from '@/components/room/JoinRequestInbox'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -16,6 +17,7 @@ function SignedInShell() {
         <div className="flex h-14 min-w-0 items-center justify-between gap-2 px-3 sm:px-4">
           <BrandMark size="sm" className="min-w-0" />
           <div className="flex shrink-0 items-center gap-1">
+            <JoinRequestInbox />
             <ThemeToggle />
             <UserMenu variant="compact" />
           </div>

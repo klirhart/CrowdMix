@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Compass, Music, Radio, Search, SquarePlus } from 'lucide-react'
+import { Compass, Music, Radio, SquarePlus } from 'lucide-react'
 import { Alert } from '@/components/ui/Alert'
 import { SectionHeading } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -32,18 +32,11 @@ const quickActions = [
     icon: Radio,
     primary: false,
   },
-  {
-    to: '/join-room?tab=search',
-    label: 'Search Rooms',
-    description: 'Find rooms and people',
-    icon: Search,
-    primary: false,
-  },
 ]
 
 function QuickActions() {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {quickActions.map((action) => {
         const Icon = action.icon
 
@@ -83,7 +76,7 @@ function QuickActions() {
 
 function RoomGrid({ rooms }: { rooms: Room[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {rooms.map((room) => (
         <RoomCard key={room.id} room={room} />
       ))}
@@ -134,7 +127,7 @@ export function HomePage() {
 
         setJoinedRooms(joined)
         setCreatedRooms(created)
-        setPublicRooms(publicList)
+        setPublicRooms(publicList.filter((room) => room.visibility === 'public'))
       } catch (err) {
         if (cancelled) {
           return
@@ -162,17 +155,17 @@ export function HomePage() {
 
   if (loading) {
     return (
-      <PageShell>
+      <PageShell width="full" className="home-page">
         <div className="h-10 w-72 max-w-full animate-pulse rounded-lg bg-surface-overlay/70" />
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((key) => (
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          {[0, 1].map((key) => (
             <div
               key={key}
               className="h-[74px] animate-pulse rounded-card border border-border bg-surface-raised"
             />
           ))}
         </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {[0, 1, 2].map((key) => (
             <RoomCardSkeleton key={key} />
           ))}
@@ -182,7 +175,7 @@ export function HomePage() {
   }
 
   return (
-    <PageShell>
+    <PageShell width="full" className="home-page">
       <PageHeader
         eyebrow="Your dashboard"
         title={profile ? `Welcome back, ${profile.display_name}` : 'Home'}

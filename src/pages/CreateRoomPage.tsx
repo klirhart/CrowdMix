@@ -60,6 +60,15 @@ export function CreateRoomPage() {
       return
     }
 
+    if (
+      formData.visibility !== 'public'
+      && formData.visibility !== 'unlisted'
+      && formData.visibility !== 'private'
+    ) {
+      setError('Choose a room visibility')
+      return
+    }
+
     if (!isConfigured || !user) {
       setError('Authentication is not configured or you are not logged in')
       return
@@ -190,7 +199,7 @@ export function CreateRoomPage() {
                 <label
                   key={option.value}
                   className={cx(
-                    'flex cursor-pointer items-start gap-3.5 rounded-card border p-4',
+                    'relative flex cursor-pointer items-start gap-3.5 rounded-card border p-4',
                     'transition-all duration-150',
                     'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent',
                     isSelected
@@ -203,7 +212,12 @@ export function CreateRoomPage() {
                     name="visibility"
                     value={option.value}
                     checked={isSelected}
-                    onChange={handleChange}
+                    onChange={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        visibility: option.value,
+                      }))
+                    }}
                     disabled={loading}
                     className="sr-only"
                   />

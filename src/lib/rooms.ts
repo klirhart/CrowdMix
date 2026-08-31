@@ -10,6 +10,18 @@ function isUniqueViolation(error: { code?: string } | null): boolean {
   return error?.code === '23505'
 }
 
+function assertRoomVisibility(value: string): Room['visibility'] {
+  if (value === 'public' || value === 'unlisted' || value === 'private') {
+    return value
+  }
+
+  throw new Error('Invalid room visibility')
+}
+
+function isDiscoverablePublicRoom(room: Room): boolean {
+  return room.visibility === 'public' && room.is_active
+}
+
 /**
  * Creates a new room
  */
@@ -22,7 +34,7 @@ export async function createRoom(
   const { data, error } = await supabase.rpc('create_room_with_member', {
     p_name: roomData.name,
     p_description: roomData.description,
-    p_visibility: roomData.visibility,
+    p_visibility: assertRoomVisibility(roomData.visibility),
     p_user_id: userId,
   })
 
@@ -131,7 +143,7 @@ export async function getPublicRooms(
     throw error
   }
 
-  return (data as Room[]) || []
+  return ((data as Room[]) || []).filter(isDiscoverablePublicRoom)
 }
 
 /**
@@ -200,6 +212,7 @@ export async function searchPublicRooms(query: string): Promise<Room[]> {
   }
 
   return [...roomsById.values()]
+    .filter(isDiscoverablePublicRoom)
     .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at))
     .slice(0, 20)
 }
@@ -241,7 +254,7 @@ export async function getPublicRoomsCreatedByUser(userId: string): Promise<Room[
     throw error
   }
 
-  return (data as Room[]) || []
+  return ((data as Room[]) || []).filter(isDiscoverablePublicRoom)
 }
 
 /**

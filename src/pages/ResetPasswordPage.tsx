@@ -1,44 +1,43 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail } from 'lucide-react'
 import { PasswordInput } from '@/components/auth/PasswordInput'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { getAuthErrorMessage, validateEmail, validatePassword } from '@/lib/auth-validation'
+import { getAuthErrorMessage, validatePassword } from '@/lib/auth-validation'
 import { getSupabaseClient } from '@/lib/supabase'
 
-export function LoginPage() {
+export function ResetPasswordPage() {
   const navigate = useNavigate()
-  const { isConfigured } = useAuth()
-  const [email, setEmail] = useState('')
+  const { user, isConfigured } = useAuth()
   const [password, setPassword] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  usePageTitle('Log in')
+  usePageTitle('Set a new password')
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    const nextEmail = String(formData.get('email') ?? '')
     const nextPassword = String(formData.get('password') ?? '')
-    setEmail(nextEmail)
+    const nextConfirm = String(formData.get('confirmPassword') ?? '')
     setPassword(nextPassword)
+    setConfirmPassword(nextConfirm)
 
     const nextFieldErrors = {
-      email: validateEmail(nextEmail) ?? undefined,
       password: validatePassword(nextPassword) ?? undefined,
+      confirmPassword:
+        nextConfirm !== nextPassword ? 'Passwords do not match.' : undefined,
     }
 
     setFieldErrors(nextFieldErrors)
 
-    if (nextFieldErrors.email || nextFieldErrors.password) {
+    if (nextFieldErrors.password || nextFieldErrors.confirmPassword) {
       return
     }
 
@@ -47,17 +46,21 @@ export function LoginPage() {
       return
     }
 
+    if (!user) {
+      setError('Open the reset link from your email to choose a new password.')
+      return
+    }
+
     setLoading(true)
 
     try {
       const supabase = getSupabaseClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: nextEmail.trim(),
+      const { error: updateError } = await supabase.auth.updateUser({
         password: nextPassword,
       })
 
-      if (signInError) {
-        throw signInError
+      if (updateError) {
+        throw updateError
       }
 
       navigate('/home', { replace: true })
@@ -71,64 +74,61 @@ export function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-title">Welcome back</h1>
-        <p className="text-sm text-muted">Log in to join the crowd.</p>
+        <h1 className="text-title">Choose a new password</h1>
+        <p className="text-sm text-muted">
+          Enter a new password for your CrowdMix account.
+        </p>
       </div>
 
-      {!isConfigured ? (
+      {!user ? (
         <Alert variant="info">
-          Add your Supabase credentials to <code>.env</code> before logging in.
+          Open the reset link from your email to continue. If the link expired, request a new one.
         </Alert>
       ) : null}
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          error={fieldErrors.email}
-          disabled={loading}
-          icon={<Mail size={16} strokeWidth={2.25} />}
-        />
-
         <PasswordInput
-          label="Password"
+          label="New password"
           name="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           placeholder="••••••••"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           error={fieldErrors.password}
-          disabled={loading}
+          disabled={loading || !user}
         />
 
-        <div className="flex justify-end">
-          <Link
-            to="/forgot-password"
-            className="text-sm font-semibold text-accent transition-colors hover:text-accent-hover"
-          >
-            Forgot password?
-          </Link>
-        </div>
+        <PasswordInput
+          label="Confirm password"
+          name="confirmPassword"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          error={fieldErrors.confirmPassword}
+          disabled={loading || !user}
+        />
 
         {error ? <Alert variant="error">{error}</Alert> : null}
 
-        <Button type="submit" formNoValidate fullWidth size="lg" disabled={loading} className="mt-2">
-          {loading ? 'Logging in...' : 'Log in'}
+        <Button
+          type="submit"
+          formNoValidate
+          fullWidth
+          size="lg"
+          disabled={loading || !user}
+          className="mt-2"
+        >
+          {loading ? 'Saving...' : 'Update password'}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted">
-        Don&apos;t have an account?{' '}
         <Link
-          to="/signup"
+          to="/forgot-password"
           className="font-semibold text-accent transition-colors hover:text-accent-hover"
         >
-          Sign up
+          Request a new reset link
         </Link>
       </p>
     </div>

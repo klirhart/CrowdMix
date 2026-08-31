@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cx } from '@/components/ui/cx'
 
-type PageWidth = 'narrow' | 'default' | 'wide'
+type PageWidth = 'narrow' | 'default' | 'wide' | 'full'
 
 interface PageShellProps {
   children: ReactNode
@@ -13,6 +13,7 @@ const widthClasses: Record<PageWidth, string> = {
   narrow: 'max-w-2xl',
   default: 'max-w-5xl',
   wide: 'max-w-6xl',
+  full: 'max-w-none',
 }
 
 /** Consistent page gutters, max width, and mount animation for every route. */

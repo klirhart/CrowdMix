@@ -27,14 +27,14 @@ export function RoomHeader({
   const closeShare = useCallback(() => setShareOpen(false), [])
 
   return (
-    <header className="room-page-header flex min-w-0 max-w-full shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border pb-3.5 sm:gap-4">
+    <header className="room-page-header flex min-w-0 w-full shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border pb-3 sm:gap-4">
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
           <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">
             {room.name}
           </h1>
           {room.is_active ? (
-            <Badge tone="live" pulse className="max-sm:hidden">
+            <Badge tone="live" pulse>
               LIVE
             </Badge>
           ) : null}
